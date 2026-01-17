@@ -434,6 +434,32 @@ export default function Results() {
           </div>
         </motion.div>
       </div>
+      {/* Floating Dashboard Action */}
+      <AnimatePresence>
+        {dashboard && dashboard.count > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-8 right-8 z-50"
+          >
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="flex items-center gap-3 pl-6 pr-8 py-4 bg-green-600 text-white rounded-full font-semibold shadow-lg shadow-green-600/30 hover:bg-green-500 hover:scale-105 active:scale-95 transition-all group"
+            >
+              <div className="relative">
+                <LayoutDashboard className="w-5 h-5" />
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-white rounded-full"></span>
+              </div>
+              <div className="text-left">
+                <p className="text-xs font-normal text-green-100">Review your path</p>
+                <p className="text-sm">Go to Dashboard ({dashboard.count}/3)</p>
+              </div>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

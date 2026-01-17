@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { RoadmapGenerationRequest, Roadmap, Module } from "@/lib/types/roadmap";
+import videosData from "@/lib/data/videos.json";
 
 const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY;
 const MISTRAL_MODEL = process.env.MISTRAL_MODEL || "open-mistral-7b";
@@ -170,7 +171,7 @@ function parseAIRoadmap(aiResponse: string, careerId: number, careerName: string
 function loadCuratedVideos(careerName: string, modules: Module[]): Record<string, any[]> {
   try {
     // Import videos data
-    const videosData = require("@/lib/data/videos.json");
+    // const videosData = require("@/lib/data/videos.json"); // Replaced with top-level import
     
     // Normalize career name to match video database keys
     const careerKey = careerName.toLowerCase().replace(/\s+/g, '-');
