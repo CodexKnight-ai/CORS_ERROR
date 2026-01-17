@@ -101,11 +101,11 @@ function buildPrompt(answers: UserAnswers): string {
   ];
 
   let userProfile = "User's Interest Profile:\n\n";
-  
+
   Object.entries(answers).forEach(([questionIndex, selections]) => {
     const qIndex = parseInt(questionIndex);
     userProfile += `${questionLabels[qIndex]}:\n`;
-    selections.forEach(selection => {
+    selections.forEach((selection: string) => {
       userProfile += `- ${selection}\n`;
     });
     userProfile += "\n";
@@ -146,7 +146,7 @@ function parseAIResponse(aiResponse: string): CareerRecommendation[] {
     }
 
     const parsed = JSON.parse(jsonMatch[0]);
-    
+
     // Map career IDs to full career objects
     const recommendations: CareerRecommendation[] = parsed.map((item: any) => {
       const career = careersData.find((c: Career) => c.id === item.careerId);
@@ -173,7 +173,6 @@ function parseAIResponse(aiResponse: string): CareerRecommendation[] {
         matchScore: 75,
         reasoning: "Recommended based on high growth potential in healthcare",
       }));
-
     return fallbackCareers;
   }
 }
