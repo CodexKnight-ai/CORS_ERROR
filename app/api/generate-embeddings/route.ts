@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { pipeline } from '@huggingface/transformers';
 // Import your existing data.js file
-import jobsData from '../../skill-gap/data.js';
+import {jobsData} from '../../skill-gap/data.js';
 
 export async function GET() {
     try {
