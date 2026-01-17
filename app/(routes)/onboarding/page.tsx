@@ -5,8 +5,6 @@ import { Code2, GraduationCap, Briefcase, Trophy, Save, Trash2, X } from "lucide
 import { getId } from "@/lib/helper/getId";
 import TestDialog from "@/components/test-dialog";
 
-/* ================= TYPES ================= */
-
 interface Education {
   institution: string;
   degree: string;
@@ -53,8 +51,6 @@ const HEALTHCARE_STUDENT_SKILLS = [
   "Telemedicine",
   "Git",
 ];
-
-/* ================= SECTION COMPONENT ================= */
 
 const Section = ({
   icon: Icon,

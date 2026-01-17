@@ -29,7 +29,7 @@ const TestDialog = ({ open, setOpen} : TestDialogProps) => {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button className="bg-green-500 cursor-pointer" onClick={() => router.push('/test')}>Yes</Button>
+            <Button className="bg-green-500 cursor-pointer" onClick={() => router.push('/interest-detector')}>Yes</Button>
             <Button className="bg-red-500 cursor-pointer">No</Button>
           </DialogFooter>
         </DialogContent>
