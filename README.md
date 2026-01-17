@@ -48,6 +48,9 @@ In today's rapidly evolving job market, identifying the right career path and un
 The platform goes beyond simple keyword matching, understanding context and nuance to suggest the most relevant opportunities based on cognitive style, technical depth preferences, and career aspirations.
 
 ---
+## 🖥️ Landing Page Preview
+
+![SkillOrbit Landing Page](public/landingPage.jpg)
 
 ## 🧠 AI-Powered Intelligence
 
@@ -159,6 +162,9 @@ SkillOrbit leverages **two powerful AI models** for career guidance:
 │  - Manage learning journey               │
 └─────────────────────────────────────────┘
 ```
+## 🏗️ System Architecture Diagram
+
+![SkillOrbit System Architecture](public/skillOrbit_architecture1.png)
 
 ### Data Flow
 
