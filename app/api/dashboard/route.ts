@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     await connectToDatabase();
 
     // Get user from token
-    const token = request.cookies.get("token")?.value;
+    const token = request.cookies.get("auth_token")?.value;
     if (!token) {
       return NextResponse.json(
         { error: "Authentication required" },
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     await connectToDatabase();
 
     // Get user from token
-    const token = request.cookies.get("token")?.value;
+    const token = request.cookies.get("auth_token")?.value;
     if (!token) {
       return NextResponse.json(
         { error: "Authentication required" },
@@ -161,7 +161,7 @@ export async function DELETE(request: NextRequest) {
     await connectToDatabase();
 
     // Get user from token
-    const token = request.cookies.get("token")?.value;
+    const token = request.cookies.get("auth_token")?.value;
     if (!token) {
       return NextResponse.json(
         { error: "Authentication required" },
@@ -222,7 +222,7 @@ export async function PATCH(request: NextRequest) {
     await connectToDatabase();
 
     // Get user from token
-    const token = request.cookies.get("token")?.value;
+    const token = request.cookies.get("auth_token")?.value;
     if (!token) {
       return NextResponse.json(
         { error: "Authentication required" },
