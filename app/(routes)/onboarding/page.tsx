@@ -2,6 +2,8 @@
 
 import { useState, KeyboardEvent, useRef } from "react";
 import { Code2, GraduationCap, Briefcase, Trophy, Save, Trash2, X } from "lucide-react";
+import { getId } from "@/lib/helper/getId";
+import TestDialog from "@/components/test-dialog";
 
 /* ================= TYPES ================= */
 
@@ -91,11 +93,9 @@ export default function HealthcareOnboardingForm() {
 
   const [skillInput, setSkillInput] = useState("");
   const skillInputRef = useRef<HTMLInputElement>(null);
+  const [testDialog, setTestDialog] = useState<boolean>(false);
 
-  const input =
-    "w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-indigo-500";
-
-  /* ================= HELPERS ================= */
+  const input = "w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-indigo-500";
 
   const addSkill = (skill: string) => {
     const s = skill.trim();
@@ -145,16 +145,37 @@ export default function HealthcareOnboardingForm() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (formData.skills.length === 0) {
       alert("Please add at least one skill");
       return;
     }
-    console.log("FORM DATA (JSON):", JSON.stringify(formData, null, 2));
-  };
 
-  /* ================= RENDER ================= */
+    const decoded = await getId();
+
+    const res = await fetch("/api/user/onboarding", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: decoded.userId,
+        skills: formData.skills,
+        education: formData.education,
+        projects: formData.projects,
+        achievements: formData.achievements,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error("Error updating profile:", data.error);
+      return;
+    }
+
+    setTestDialog(true);
+  };
 
   return (
     <div className="min-h-screen bg-[#0B0E14] text-slate-100">
@@ -346,6 +367,7 @@ export default function HealthcareOnboardingForm() {
           </div>
         </form>
       </div>
+      {testDialog && <TestDialog open={testDialog} setOpen={setTestDialog} />}
     </div>
   );
 }
