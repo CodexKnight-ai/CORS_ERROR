@@ -1,0 +1,146 @@
+{
+  "healthcare-informatics": {
+    "module-1": [
+      {
+        "id": "dQw4w9WgXcQ",
+        "title": "Introduction to Healthcare IT Systems",
+        "channelName": "Healthcare Tech Academy",
+        "viewCount": "2.5M",
+        "thumbnailUrl": "https://i.ytimg.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
+        "videoUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+      },
+      {
+        "id": "9bZkp7q19f0",
+        "title": "Electronic Health Records (EHR) Basics",
+        "channelName": "Medical IT Explained",
+        "viewCount": "1.8M",
+        "thumbnailUrl": "https://i.ytimg.com/vi/9bZkp7q19f0/maxresdefault.jpg",
+        "videoUrl": "https://www.youtube.com/watch?v=9bZkp7q19f0"
+      },
+      {
+        "id": "kJQP7kiw5Fk",
+        "title": "HIPAA Compliance Fundamentals",
+        "channelName": "Healthcare Security",
+        "viewCount": "1.2M",
+        "thumbnailUrl": "https://i.ytimg.com/vi/kJQP7kiw5Fk/maxresdefault.jpg",
+        "videoUrl": "https://www.youtube.com/watch?v=kJQP7kiw5Fk"
+      }
+    ],
+    "module-2": [
+      {
+        "id": "L_jWHffIx5E",
+        "title": "Healthcare Data Standards - HL7 & FHIR",
+        "channelName": "Interoperability Hub",
+        "viewCount": "980K",
+        "thumbnailUrl": "https://i.ytimg.com/vi/L_jWHffIx5E/maxresdefault.jpg",
+        "videoUrl": "https://www.youtube.com/watch?v=L_jWHffIx5E"
+      },
+      {
+        "id": "jNQXAC9IVRw",
+        "title": "Clinical Decision Support Systems",
+        "channelName": "Health Tech Pro",
+        "viewCount": "750K",
+        "thumbnailUrl": "https://i.ytimg.com/vi/jNQXAC9IVRw/maxresdefault.jpg",
+        "videoUrl": "https://www.youtube.com/watch?v=jNQXAC9IVRw"
+      },
+      {
+        "id": "y6120QOlsfU",
+        "title": "Medical Imaging Systems",
+        "channelName": "Radiology IT",
+        "viewCount": "650K",
+        "thumbnailUrl": "https://i.ytimg.com/vi/y6120QOlsfU/maxresdefault.jpg",
+        "videoUrl": "https://www.youtube.com/watch?v=y6120QOlsfU"
+      }
+    ],
+    "module-3": [
+      {
+        "id": "dQw4w9WgXcQ",
+        "title": "Healthcare Analytics & Big Data",
+        "channelName": "Data in Medicine",
+        "viewCount": "1.5M",
+        "thumbnailUrl": "https://i.ytimg.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
+        "videoUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+      },
+      {
+        "id": "9bZkp7q19f0",
+        "title": "Telemedicine Platform Development",
+        "channelName": "Remote Health Tech",
+        "viewCount": "890K",
+        "thumbnailUrl": "https://i.ytimg.com/vi/9bZkp7q19f0/maxresdefault.jpg",
+        "videoUrl": "https://www.youtube.com/watch?v=9bZkp7q19f0"
+      }
+    ]
+  },
+  "default": {
+    "module-1": [
+      {
+        "id": "dQw4w9WgXcQ",
+        "title": "Getting Started - Foundations",
+        "channelName": "Career Learning Hub",
+        "viewCount": "3.2M",
+        "thumbnailUrl": "https://i.ytimg.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
+        "videoUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+      },
+      {
+        "id": "9bZkp7q19f0",
+        "title": "Core Concepts Explained",
+        "channelName": "Professional Development",
+        "viewCount": "2.1M",
+        "thumbnailUrl": "https://i.ytimg.com/vi/9bZkp7q19f0/maxresdefault.jpg",
+        "videoUrl": "https://www.youtube.com/watch?v=9bZkp7q19f0"
+      },
+      {
+        "id": "kJQP7kiw5Fk",
+        "title": "Industry Best Practices",
+        "channelName": "Expert Insights",
+        "viewCount": "1.7M",
+        "thumbnailUrl": "https://i.ytimg.com/vi/kJQP7kiw5Fk/maxresdefault.jpg",
+        "videoUrl": "https://www.youtube.com/watch?v=kJQP7kiw5Fk"
+      }
+    ],
+    "module-2": [
+      {
+        "id": "L_jWHffIx5E",
+        "title": "Technical Skills Development",
+        "channelName": "Skill Builder",
+        "viewCount": "1.9M",
+        "thumbnailUrl": "https://i.ytimg.com/vi/L_jWHffIx5E/maxresdefault.jpg",
+        "videoUrl": "https://www.youtube.com/watch?v=L_jWHffIx5E"
+      },
+      {
+        "id": "jNQXAC9IVRw",
+        "title": "Practical Applications",
+        "channelName": "Hands-On Learning",
+        "viewCount": "1.4M",
+        "thumbnailUrl": "https://i.ytimg.com/vi/jNQXAC9IVRw/maxresdefault.jpg",
+        "videoUrl": "https://www.youtube.com/watch?v=jNQXAC9IVRw"
+      },
+      {
+        "id": "y6120QOlsfU",
+        "title": "Real-World Projects",
+        "channelName": "Project Academy",
+        "viewCount": "1.1M",
+        "thumbnailUrl": "https://i.ytimg.com/vi/y6120QOlsfU/maxresdefault.jpg",
+        "videoUrl": "https://www.youtube.com/watch?v=y6120QOlsfU"
+      }
+    ],
+    "module-3": [
+      {
+        "id": "dQw4w9WgXcQ",
+        "title": "Advanced Techniques",
+        "channelName": "Master Class",
+        "viewCount": "2.3M",
+        "thumbnailUrl": "https://i.ytimg.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
+        "videoUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+      },
+      {
+        "id": "9bZkp7q19f0",
+        "title": "Industry Certifications",
+        "channelName": "Certification Guide",
+        "viewCount": "1.6M",
+        "thumbnailUrl": "https://i.ytimg.com/vi/9bZkp7q19f0/maxresdefault.jpg",
+        "videoUrl": "https://www.youtube.com/watch?v=9bZkp7q19f0"
+      }
+    ]
+  }
+}
