@@ -45,7 +45,7 @@ export default function RoadmapCard({ roadmap, onRemove }: RoadmapCardProps) {
       exit={{ opacity: 0, scale: 0.9 }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
       whileHover={{ scale: 1.02, y: -4 }}
-      className="relative border border-white/10 rounded-xl overflow-hidden bg-gradient-to-br from-white/5 to-white/[0.02] hover:border-green-500/30 hover:shadow-[0_0_20px_rgba(34,197,94,0.15)] transition-all backdrop-blur-sm"
+      className="relative border border-white/10 rounded-3xl overflow-hidden bg-white/5 hover:bg-white/10 hover:border-white/20 hover:shadow-[0_0_30px_rgba(255,255,255,0.05)] transition-all backdrop-blur-xl group"
     >
       {/* Remove Button */}
       <motion.button
@@ -53,46 +53,46 @@ export default function RoadmapCard({ roadmap, onRemove }: RoadmapCardProps) {
         disabled={isRemoving}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
-        className="absolute top-3 right-3 z-10 p-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 rounded-lg transition-all group"
+        className="absolute top-4 right-4 z-20 p-2 bg-black/40 hover:bg-red-500/20 border border-white/10 hover:border-red-500/40 rounded-full transition-all opacity-0 group-hover:opacity-100"
       >
-        <Trash2 className="w-4 h-4 text-red-400 group-hover:text-red-300" />
+        <Trash2 className="w-4 h-4 text-zinc-400 group-hover:text-red-400" />
       </motion.button>
 
       {/* Card Content */}
-      <div className="p-6">
+      <div className="p-8">
         {/* Progress Badge */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-6">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.1, ease: "easeInOut" }}
-            className="px-3 py-1.5 bg-gradient-to-r from-green-500/20 to-green-600/20 border border-green-500/40 rounded-full text-green-400 text-sm font-semibold shadow-lg shadow-green-500/10"
+            className="px-4 py-1.5 bg-green-500/10 border border-green-500/20 rounded-full text-green-300 text-xs font-bold uppercase tracking-wide backdrop-blur-md"
           >
             {roadmap.matchScore}% Match
           </motion.div>
-          <div className="text-2xl font-bold text-white">
+          <div className="text-3xl font-bold text-white drop-shadow-lg">
             {roadmap.progress}%
           </div>
         </div>
 
         {/* Career Name */}
-        <h3 className="text-xl font-bold mb-2 text-white line-clamp-2">
+        <h3 className="text-2xl font-bold mb-4 text-white line-clamp-2 leading-tight">
           {roadmap.careerName}
         </h3>
 
         {/* Progress Bar */}
-        <div className="mb-4">
-          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+        <div className="mb-8">
+          <div className="h-3 bg-black/40 rounded-full overflow-hidden border border-white/5">
             <motion.div
-              className="h-full bg-gradient-to-r from-green-500 to-green-400"
+              className="h-full bg-gradient-to-r from-green-400 to-emerald-500 shadow-[0_0_10px_rgba(74,222,128,0.5)]"
               initial={{ width: 0 }}
               animate={{ width: `${roadmap.progress}%` }}
               transition={{ duration: 0.5, ease: "easeInOut" }}
             />
           </div>
-          <div className="flex items-center justify-between mt-2 text-xs text-gray-400">
-            <span className="flex items-center gap-1">
-              <TrendingUp className="w-3 h-3" />
+          <div className="flex items-center justify-between mt-3 text-xs font-medium text-zinc-400">
+            <span className="flex items-center gap-1.5">
+              <TrendingUp className="w-3.5 h-3.5" />
               {roadmap.progress === 0 ? "Not started" : roadmap.progress === 100 ? "Completed" : "In progress"}
             </span>
             <span>{roadmap.progress}/100</span>
@@ -104,14 +104,14 @@ export default function RoadmapCard({ roadmap, onRemove }: RoadmapCardProps) {
           onClick={handleStartLearning}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-lg font-semibold transition-all bg-gradient-to-r from-white to-gray-100 text-black hover:shadow-xl hover:shadow-black/20"
+          className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-full font-semibold transition-all bg-white text-black hover:bg-zinc-200 shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.3)]"
         >
           {roadmap.progress === 0 ? "Start Learning" : "Continue Learning"}
           <ArrowRight className="w-5 h-5" />
         </motion.button>
 
         {/* Last Accessed */}
-        <div className="mt-4 text-xs text-gray-500 text-center">
+        <div className="mt-6 text-[10px] text-zinc-500 text-center uppercase tracking-widest font-medium">
           {roadmap.lastAccessed 
             ? `Last accessed ${formatDate(roadmap.lastAccessed)}`
             : `Added ${formatDate(roadmap.addedAt)}`

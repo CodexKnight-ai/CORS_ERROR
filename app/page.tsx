@@ -67,7 +67,7 @@ const LandingPage = () => {
                 </a>
               ))}
               <Link href="/dashboard">
-                <button className="px-5 py-2 bg-white text-black text-sm font-semibold rounded-lg hover:bg-zinc-200 transition-colors">
+                <button className="px-5 py-2 bg-white text-black text-sm font-semibold rounded-full hover:bg-zinc-200 transition-colors shadow-[0_0_10px_rgba(255,255,255,0.2)]">
                   Get Started
                 </button>
               </Link>
@@ -131,24 +131,24 @@ const LandingPage = () => {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20 pointer-events-auto">
             <Link href="/dashboard">
-              <button className="group px-8 py-4 bg-white text-black font-semibold rounded-lg hover:bg-zinc-200 transition-all flex items-center gap-2 shadow-lg hover:shadow-xl">
+              <button className="group px-8 py-4 bg-white text-black font-semibold rounded-full hover:bg-zinc-200 transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.5)]">
                 Start Your Journey
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </Link>
-            <button className="px-8 py-4 text-zinc-300 font-medium rounded-lg hover:text-white hover:bg-white/5 transition-colors backdrop-blur-sm border border-white/5">
+            <button className="px-8 py-4 text-white font-medium rounded-full bg-white/10 hover:bg-white/20 transition-all backdrop-blur-md border border-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)] hover:shadow-[0_0_25px_rgba(255,255,255,0.1)]">
               Watch Demo
             </button>
           </div>
 
-          <div className="grid grid-cols-3 divide-x divide-white/10 border-y border-white/10 py-8 bg-black/40 backdrop-blur-md pointer-events-auto rounded-xl">
+          <div className="grid grid-cols-3 divide-x divide-white/10 border border-white/10 py-8 bg-black/20 backdrop-blur-xl pointer-events-auto rounded-2xl shadow-2xl">
             {[
               { val: '50+', label: 'Partner Hospitals' },
               { val: '98%', label: 'Match Rate' },
               { val: '20+', label: 'Specialties' }
             ].map((stat, i) => (
               <div key={i} className="flex flex-col items-center">
-                <span className="text-2xl sm:text-3xl font-bold text-white mb-1">{stat.val}</span>
+                <span className="text-2xl sm:text-3xl font-bold text-white mb-1 drop-shadow-md">{stat.val}</span>
                 <span className="text-xs sm:text-sm text-zinc-400 uppercase tracking-wider">{stat.label}</span>
               </div>
             ))}
@@ -173,13 +173,13 @@ const LandingPage = () => {
 
           <div className="grid md:grid-cols-3 gap-6">
             {sectors.map((sector, idx) => (
-              <div key={idx} className="group p-8 rounded-2xl bg-zinc-900/20 border border-white/10 hover:border-white/20 hover:bg-zinc-900/40 transition-all duration-300">
-                <div className="text-4xl mb-6 grayscale group-hover:grayscale-0 transition-all duration-500">{sector.icon}</div>
+              <div key={idx} className="group p-8 rounded-3xl bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/10 transition-all duration-300 backdrop-blur-md shadow-lg">
+                <div className="text-4xl mb-6 grayscale group-hover:grayscale-0 transition-all duration-500 bg-white/5 w-16 h-16 rounded-2xl flex items-center justify-center border border-white/5 group-hover:scale-110">{sector.icon}</div>
                 <h3 className="text-xl font-semibold mb-3 text-white group-hover:text-white transition-colors">{sector.title}</h3>
-                <p className="text-sm text-zinc-500 leading-relaxed mb-6 group-hover:text-zinc-400 transition-colors">
+                <p className="text-sm text-zinc-400 leading-relaxed mb-6 group-hover:text-zinc-300 transition-colors">
                   {sector.desc}
                 </p>
-                <div className="flex items-center text-sm font-medium text-zinc-500 group-hover:text-white transition-colors">
+                <div className="flex items-center text-sm font-medium text-white/60 group-hover:text-white transition-colors">
                   Explore Path <ChevronRight className="w-4 h-4 ml-1" />
                 </div>
               </div>
@@ -200,12 +200,12 @@ const LandingPage = () => {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature, idx) => (
-              <div key={idx} className="p-6 rounded-xl border border-white/5 bg-black hover:border-white/20 transition-all duration-300 group">
-                <div className="w-10 h-10 rounded-lg bg-zinc-900 flex items-center justify-center mb-4 text-zinc-400 group-hover:text-white group-hover:bg-zinc-800 transition-all">
+              <div key={idx} className="p-6 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-white/20 transition-all duration-300 group hover:-translate-y-1 shadow-xl">
+                <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center mb-4 text-zinc-400 group-hover:text-white group-hover:bg-white/20 transition-all border border-white/5">
                   {feature.icon}
                 </div>
-                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                <p className="text-sm text-zinc-500 leading-relaxed">
+                <h3 className="text-lg font-semibold mb-2 text-white">{feature.title}</h3>
+                <p className="text-sm text-zinc-400 leading-relaxed group-hover:text-zinc-300">
                   {feature.desc}
                 </p>
               </div>
@@ -235,8 +235,8 @@ const LandingPage = () => {
 
             <div className="relative">
               {/* Glass Card Stack */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent rounded-2xl blur-2xl"></div>
-              <div className="relative space-y-4 p-8 rounded-2xl border border-white/10 bg-black/50 backdrop-blur-md">
+              <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent rounded-3xl blur-2xl"></div>
+              <div className="relative space-y-4 p-8 rounded-3xl border border-white/10 bg-black/40 backdrop-blur-xl shadow-2xl">
                 
                 {[
                   { label: 'Skill Progress', val: '87%' },
@@ -246,11 +246,11 @@ const LandingPage = () => {
                   <div key={i} className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="font-medium text-zinc-300">{item.label}</span>
-                      <span className="font-mono text-white">{item.val}</span>
+                      <span className="font-mono text-white text-shadow-glow">{item.val}</span>
                     </div>
-                    <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
+                    <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden backdrop-blur-sm">
                       <div 
-                        className="h-full bg-white rounded-full transition-all duration-1000 ease-out" 
+                        className="h-full bg-white rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(255,255,255,0.5)]" 
                         style={{ width: item.val.replace('+', '') }}
                       />
                     </div>
@@ -273,7 +273,7 @@ const LandingPage = () => {
           <p className="text-lg text-zinc-400 mb-10 max-w-xl mx-auto">
             Join thousands of students and professionals mapping their path to success today.
           </p>
-          <button className="px-8 py-4 bg-white text-black font-semibold rounded-lg hover:scale-105 transition-transform duration-200">
+          <button className="px-8 py-4 bg-white text-black font-semibold rounded-full hover:scale-105 transition-transform duration-200 shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.5)]">
             Get Started Now
           </button>
         </div>
