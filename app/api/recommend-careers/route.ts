@@ -270,18 +270,20 @@ function buildOptimizedPrompt(
     "Career goal"
   ];
 
-  let userProfile = "User's Interest Profile:\n\n";
-  
-  Object.entries(answers).forEach(([questionIndex, selections]) => {
-    const qIndex = parseInt(questionIndex);
-    userProfile += `${questionLabels[qIndex]}:\n`;
-    selections.forEach(selection => {
-      userProfile += `- ${selection}\n`;
-    });
-    userProfile += "\n";
+  let userProfile = "User Profile:\n";
+  Object.entries(answers).forEach(([qIndex, selections]) => {
+    userProfile += `${questionLabels[parseInt(qIndex)]}: ${selections.join(", ")}\n`;
   });
 
-  const careersJson = JSON.stringify(careersData, null, 2);
+  const careerSummaries = careers.map(c => ({
+    id: c.id,
+    name: c.field_name,
+    description: c.field_description.substring(0, 150),
+    skills: c.skills_required.slice(0, 5),
+    difficulty: c.difficulty_rating,
+    growth: c.demand_growth_2026,
+    remote: c.remote_friendly,
+  }));
 
   return `${userProfile}
 
@@ -314,8 +316,12 @@ function parseAIResponse(
 
     const parsed = JSON.parse(jsonMatch[0]);
     
-    // Map career IDs to full career objects
-    const recommendations: CareerRecommendation[] = parsed.map((item: any) => {
+    const recommendations: CareerRecommendation[] = [];
+    const usedIds = new Set<number>();
+
+    for (const item of parsed) {
+      if (usedIds.has(item.careerId)) continue; // Skip duplicates
+      
       const career = careersData.find((c: Career) => c.id === item.careerId);
       if (!career) continue;
 
@@ -345,17 +351,30 @@ function parseAIResponse(
 
     return recommendations;
   } catch (error) {
-    console.error("Error parsing AI response:", error);
-    // Fallback: return top 5 careers by growth potential
-    const fallbackCareers = [...careersData]
-      .sort((a: Career, b: Career) => b.growth_potential_rating - a.growth_potential_rating)
-      .slice(0, 5)
-      .map((career: Career) => ({
-        career,
-        matchScore: 75,
-        reasoning: "Recommended based on high growth potential in healthcare",
-      }));
-
-    return fallbackCareers;
+    console.error("Parse error:", error);
+    // Return filtered careers as fallback
+    return filteredCareers.slice(0, 5).map(career => ({
+      career,
+      matchScore: career.matchScore || 80,
+      reasoning: generateReasoning(career, {}),
+    }));
   }
+}
+
+function generateReasoning(career: Career, answers: UserAnswers): string {
+  const reasons: string[] = [];
+  
+  if (career.growth_potential_rating >= 8) {
+    reasons.push("high growth potential");
+  }
+  
+  if (career.remote_friendly) {
+    reasons.push("remote work options");
+  }
+  
+  if (career.difficulty_rating >= 7) {
+    reasons.push("advanced technical role");
+  }
+  
+  return `This career offers ${reasons.join(", ")} and aligns well with your interests in healthcare technology.`;
 }
