@@ -26,8 +26,11 @@ SkillOrbit is a comprehensive, AI-driven career guidance and skill development p
 - [API Endpoints](#api-endpoints)
 - [Getting Started](#getting-started)
 - [Environment Variables](#environment-variables)
-- [Core Features Breakdown](#core-features-breakdown)
 - [Deployment](#deployment)
+- [Security & Best Practices](#security--best-practices)
+- [Error Handling](#error-handling)
+- [Testing](#testing)
+- [Core Features Breakdown](#core-features-breakdown)
 - [Contributing](#contributing)
 
 ---
@@ -45,6 +48,9 @@ In today's rapidly evolving job market, identifying the right career path and un
 The platform goes beyond simple keyword matching, understanding context and nuance to suggest the most relevant opportunities based on cognitive style, technical depth preferences, and career aspirations.
 
 ---
+## 🖥️ Landing Page Preview
+
+![SkillOrbit Landing Page](public/landingPage.jpg)
 
 ## 🧠 AI-Powered Intelligence
 
@@ -156,6 +162,9 @@ SkillOrbit leverages **two powerful AI models** for career guidance:
 │  - Manage learning journey               │
 └─────────────────────────────────────────┘
 ```
+## 🏗️ System Architecture Diagram
+
+![SkillOrbit System Architecture](public/skillOrbit_architecture1.png)
 
 ### Data Flow
 
@@ -163,7 +172,7 @@ SkillOrbit leverages **two powerful AI models** for career guidance:
 2. **API Routes**: Server-side logic, AI integration, database operations
 3. **AI Services**: Mistral AI for career matching and roadmap generation
 4. **Database (MongoDB)**: User profiles, career data, progress tracking
-5. **Vector Database (Supabase)**: Semantic search capabilities (optional/future)
+5. **Vector Database (Supabase)**: Semantic search capabilities
 
 ---
 
@@ -192,7 +201,7 @@ SkillOrbit leverages **two powerful AI models** for career guidance:
 |-----------|---------|
 | **MongoDB** | Primary database (via Mongoose ODM) |
 | **Mongoose** | 9.1.4 - MongoDB object modeling |
-| **Supabase** | PostgreSQL with pgvector (optional) |
+| **Supabase** | PostgreSQL with pgvector|
 
 ### **Authentication & Security**
 | Technology | Purpose |
@@ -420,7 +429,7 @@ skill-orbit/
 │   │   └── videos.json           # Curated video resources
 │   ├── helper/
 │   │   ├── getId.ts              # User ID extraction
-│   │   └── supabase.ts           # Supabase client (optional)
+│   │   └── supabase.ts           # Supabase client
 │   ├── types/
 │   │   ├── careers.ts            # Career type definitions
 │   │   └── roadmap.ts            # Roadmap type definitions
@@ -569,7 +578,7 @@ skill-orbit/
 |--------|----------|-------------|
 | POST | `/api/user/onboarding` | Save onboarding data |
 
-### **Admin (Optional)**
+### **Admin**
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/admin/seed` | Seed database with embeddings |
@@ -580,55 +589,166 @@ skill-orbit/
 ## 🚀 Getting Started
 
 ### **Prerequisites**
-- Node.js 20.x or higher
-- MongoDB instance (local or Atlas)
-- Mistral AI API key
-- (Optional) Supabase account for vector search
+- **Node.js** 20.x or higher ([Download](https://nodejs.org/))
+- **MongoDB** instance (local or [MongoDB Atlas](https://www.mongodb.com/cloud/atlas))
+- **Mistral AI API Key** ([Get API Key](https://console.mistral.ai/))
+- Supabase account for vector search ([Sign up](https://supabase.com/))
 
-### **Installation**
+---
 
-1. **Clone the repository**
+### **📦 Installation Steps**
+
+#### **1. Clone the Repository**
 ```bash
-git clone https://github.com/your-username/skill-orbit.git
+git clone https://github.com/CodexKnight-ai/SkillOrbit.git
 cd skill-orbit
 ```
 
-2. **Install dependencies**
+#### **2. Install Dependencies**
 ```bash
 npm install
 ```
 
-3. **Set up environment variables**
-Create a `.env` file in the root directory:
+This will install all required packages including:
+- Next.js, React, TypeScript
+- Mongoose (MongoDB ODM)
+- Mistral AI SDK
+- Hugging Face Transformers
+- Authentication libraries (JOSE, bcryptjs)
+- UI libraries (Framer Motion, Radix UI, Lucide React)
+
+#### **3. Set Up Environment Variables**
+
+Create a `.env` file in the **root directory** and add the following:
+
 ```env
-# Database
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/skillorbit
+# ============================================
+# DATABASE CONFIGURATION
+# ============================================
+MONGODB_URI=mongodb+srv://your_username:your_password@cluster0.xxxxx.mongodb.net/skillorbit?retryWrites=true&w=majority
 
-# Authentication
-JWT_SECRET=your_secure_jwt_secret_key_here
+# ============================================
+# AUTHENTICATION
+# ============================================
+JWT_SECRET=your_secure_random_jwt_secret_key_minimum_32_characters
 
-# AI Services
-MISTRAL_API_KEY=your_mistral_api_key
+# ============================================
+# AI SERVICES - MISTRAL AI
+# ============================================
+MISTRAL_API_KEY=your_mistral_api_key_here
 MISTRAL_MODEL=open-mistral-7b
 
-# Optional: Supabase (for vector search)
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+# ============================================
+# SUPABASE (Vector Search)
+# ============================================
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 ```
 
-4. **Run development server**
+**📝 How to Get API Keys:**
+
+| Service | How to Obtain |
+|---------|---------------|
+| **MongoDB URI** | 1. Create account at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)<br>2. Create a cluster<br>3. Click "Connect" → "Connect your application"<br>4. Copy the connection string |
+| **JWT Secret** | Generate a random string (32+ characters):<br>`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+| **Mistral API Key** | 1. Sign up at [Mistral AI Console](https://console.mistral.ai/)<br>2. Navigate to API Keys<br>3. Create new API key |
+| **Supabase** | 1. Create project at [Supabase](https://supabase.com/)<br>2. Go to Settings → API<br>3. Copy URL and keys |
+
+#### **4. Run Development Server**
 ```bash
 npm run dev
 ```
 
-5. **Open your browser**
-Navigate to [http://localhost:3000](http://localhost:3000)
+**Expected Output:**
+```
+  ▲ Next.js 16.1.3
+  - Local:        http://localhost:3000
+  - Network:      http://192.168.x.x:3000
 
-### **Build for Production**
+ ✓ Ready in 2.5s
+```
+
+#### **5. Open Your Browser**
+Navigate to **[http://localhost:3000](http://localhost:3000)**
+
+You should see the SkillOrbit landing page! 🎉
+
+---
+
+### **🏗️ Build for Production**
+
 ```bash
+# Build the application
 npm run build
+
+# Start production server
 npm start
+```
+
+**Production URL:** [http://localhost:3000](http://localhost:3000)
+
+---
+
+### **🧪 Test the Application**
+
+#### **Option 1: Create New Account**
+1. Go to [http://localhost:3000/register](http://localhost:3000/register)
+2. Fill in the registration form
+3. Login with your credentials
+
+#### **Option 2: Use Test Credentials** (If seeded)
+```
+Email: test@skillorbit.com
+Password: test123456
+```
+
+**Note:** You'll need to create an account first as there's no default test user in the database.
+
+---
+
+### **📋 Quick Start Commands (Copy-Paste)**
+
+```bash
+# Clone and setup
+git clone https://github.com/CodexKnight-ai/SkillOrbit.git
+cd skill-orbit
+npm install
+
+# Create .env file (then add your keys)
+touch .env
+
+# Run development server
+npm run dev
+```
+
+---
+
+### **🔧 Troubleshooting**
+
+| Issue | Solution |
+|-------|----------|
+| **MongoDB Connection Error** | • Check MONGODB_URI is correct<br>• Ensure IP whitelist includes your IP<br>• Verify database user credentials |
+| **Mistral API Error** | • Verify MISTRAL_API_KEY is valid<br>• Check API quota/limits<br>• Ensure internet connection |
+| **Port 3000 Already in Use** | Run on different port: `PORT=3001 npm run dev` |
+| **Module Not Found** | Delete `node_modules` and run `npm install` again |
+| **JWT Error** | Ensure JWT_SECRET is set in `.env` |
+
+---
+
+### **🗂️ Project Structure After Setup**
+
+```
+skill-orbit/
+├── .env                    # ✅ Your environment variables (DO NOT COMMIT)
+├── .gitignore              # ✅ Ensures .env is not tracked
+├── node_modules/           # ✅ Installed dependencies
+├── .next/                  # ✅ Next.js build output
+├── app/                    # Application code
+├── components/             # React components
+├── lib/                    # Utilities
+├── models/                 # Database schemas
+└── package.json            # Dependencies
 ```
 
 ---
@@ -640,10 +760,10 @@ npm start
 | `MONGODB_URI` | ✅ | MongoDB connection string |
 | `JWT_SECRET` | ✅ | Secret key for JWT signing |
 | `MISTRAL_API_KEY` | ✅ | Mistral AI API key |
-| `MISTRAL_MODEL` | ⚠️ | Mistral model name (default: open-mistral-7b) |
-| `NEXT_PUBLIC_SUPABASE_URL` | ❌ | Supabase project URL (optional) |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ❌ | Supabase anonymous key (optional) |
-| `SUPABASE_SERVICE_ROLE_KEY` | ❌ | Supabase service role key (optional) |
+| `MISTRAL_MODEL` | ✅ | Mistral model name (default: open-mistral-7b) |
+| `NEXT_PUBLIC_SUPABASE_URL` | ✅ | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | Supabase anonymous key |
+| `SUPABASE_SERVICE_ROLE_KEY` | ✅ | Supabase service role key |
 
 ---
 
@@ -718,6 +838,179 @@ Add all environment variables in the Vercel dashboard under Settings → Environ
 
 ### **MongoDB Atlas**
 Ensure your MongoDB Atlas cluster allows connections from Vercel's IP addresses (or use 0.0.0.0/0 for development).
+
+---
+
+## 🔒 Security & Best Practices
+
+### **✅ No Secrets in Repository**
+
+**This repository is secure and does NOT contain any sensitive information:**
+
+- ✅ `.env` file is in `.gitignore` (line 34: `.env*`)
+- ✅ All API keys are loaded from environment variables
+- ✅ No hardcoded credentials in source code
+- ✅ JWT secrets are environment-based
+- ✅ Database credentials are externalized
+- ✅ `.gitignore` properly configured
+
+**Verified Files:**
+```bash
+# .gitignore includes:
+.env*                    # All environment files
+node_modules/            # Dependencies
+.next/                   # Build output
+*.pem                    # Private keys
+```
+
+### **🔐 Environment Variable Security**
+
+| Variable | Security Level | Notes |
+|----------|---------------|-------|
+| `MONGODB_URI` | 🔴 **Critical** | Never commit to repo |
+| `JWT_SECRET` | 🔴 **Critical** | Use strong random string (32+ chars) |
+| `MISTRAL_API_KEY` | 🔴 **Critical** | Keep private, monitor usage |
+| `SUPABASE_SERVICE_ROLE_KEY` | 🔴 **Critical** | Server-side only |
+| `NEXT_PUBLIC_SUPABASE_URL` | 🟡 **Public** | Safe to expose (public URL) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | 🟡 **Public** | Safe to expose (anon key) |
+
+### **🛡️ Security Checklist**
+
+Before deploying to production:
+
+- [ ] All environment variables set in hosting platform
+- [ ] `.env` file NOT committed to Git
+- [ ] MongoDB IP whitelist configured
+- [ ] Mistral AI API key has usage limits
+- [ ] JWT secret is strong and random (32+ characters)
+- [ ] HTTPS enabled on production domain
+- [ ] CORS configured properly
+- [ ] Rate limiting implemented (if needed)
+
+---
+
+## ⚠️ Error Handling
+
+The application includes comprehensive error handling:
+
+### **Frontend Error Handling**
+
+```typescript
+// API Call Error Handling
+try {
+  const response = await fetch('/api/recommend-careers', {
+    method: 'POST',
+    body: JSON.stringify({ answers })
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to get recommendations');
+  }
+  
+  const data = await response.json();
+} catch (error) {
+  console.error('Error:', error);
+  alert('Failed to get recommendations. Please try again.');
+}
+```
+
+### **Backend Error Handling**
+
+```typescript
+// API Route Error Handling
+export async function POST(request: NextRequest) {
+  try {
+    // Business logic
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('API Error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+```
+
+### **Common Error Scenarios**
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| **401 Unauthorized** | Invalid/missing JWT token | Login again |
+| **500 Internal Server Error** | API/Database failure | Check logs, verify env vars |
+| **Failed to fetch** | Network issue | Check internet connection |
+| **MongoDB Connection Error** | Invalid URI or network | Verify MONGODB_URI and IP whitelist |
+| **Mistral API Error** | Invalid key or quota exceeded | Check API key and usage limits |
+
+### **Error Logging**
+
+All errors are logged to the console:
+```typescript
+console.error('Error in recommend-careers API:', error);
+```
+
+For production, consider integrating:
+- **Sentry** for error tracking
+- **LogRocket** for session replay
+- **DataDog** for monitoring
+
+---
+
+## 📊 API Response Formats
+
+### **Success Response**
+```json
+{
+  "recommendations": [
+    {
+      "career": { /* career object */ },
+      "matchScore": 95,
+      "reasoning": "Excellent match based on..."
+    }
+  ],
+  "analysisTime": 1234
+}
+```
+
+### **Error Response**
+```json
+{
+  "error": "Error message description"
+}
+```
+
+---
+
+## 🧪 Testing
+
+### **Manual Testing Checklist**
+
+- [ ] User registration works
+- [ ] User login works
+- [ ] Interest detector completes all 7 questions
+- [ ] Career recommendations are generated
+- [ ] Roadmap generation works
+- [ ] Dashboard displays roadmaps
+- [ ] Progress tracking updates
+- [ ] Logout works correctly
+
+### **API Testing**
+
+Use tools like **Postman** or **Thunder Client**:
+
+```bash
+# Test Career Recommendations
+POST http://localhost:3000/api/recommend-careers
+Content-Type: application/json
+
+{
+  "answers": {
+    "0": ["🧠 Working with data, numbers, and insights"],
+    "1": ["Finding patterns & making predictions from data"]
+    // ... more answers
+  }
+}
+```
 
 ---
 
@@ -797,4 +1090,50 @@ For support, email support@skillorbit.com or open an issue in the GitHub reposit
 
 ---
 
+## 📝 Quick Reference Summary
+
+### **✅ What's Included:**
+- ✅ Complete AI-powered career guidance platform
+- ✅ 27 healthcare technology career paths
+- ✅ Mistral AI integration for recommendations
+- ✅ BERT models for semantic understanding
+- ✅ 7-question interest assessment
+- ✅ Personalized learning roadmaps
+- ✅ Progress tracking dashboard
+- ✅ Secure JWT authentication
+- ✅ Beautiful UI with Framer Motion
+- ✅ Fully responsive design
+
+### **🔒 Security Confirmed:**
+- ✅ No secrets in repository
+- ✅ `.env` properly gitignored
+- ✅ All credentials externalized
+- ✅ Environment variables documented
+- ✅ `.env.example` provided
+
+### **🚀 Quick Start:**
+```bash
+git clone https://github.com/CodexKnight-ai/SkillOrbit.git
+cd skill-orbit
+npm install
+# Add your .env file
+npm run dev
+```
+
+### **🤖 AI Models Used:**
+- **Mistral AI** (open-mistral-7b) - Career recommendations
+- **Bio_ClinicalBERT** (768-dim) - Healthcare embeddings
+- **all-MiniLM-L6-v2** (384-dim) - General embeddings
+
+### **📊 Key Metrics:**
+- 27 career paths
+- 7 assessment questions
+- 5-7 modules per roadmap
+- 3 simultaneous roadmaps
+- 100% TypeScript coverage
+
+---
+
 **Built with ❤️ by CodexKnight Team**
+
+*Empowering the next generation of healthcare technology professionals through AI-powered career intelligence.*
