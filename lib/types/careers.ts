@@ -52,3 +52,18 @@ export interface RecommendationResponse {
   recommendations: CareerRecommendation[];
   analysisTime: number;
 }
+
+export interface DashboardRoadmap {
+  careerId: number;
+  careerName: string;
+  matchScore: number;
+  addedAt: Date;
+  lastAccessed?: Date;
+  progress: number; // 0-100
+}
+
+export interface DashboardState {
+  roadmaps: DashboardRoadmap[];
+  count: number;
+  maxRoadmaps: number; // 3
+}

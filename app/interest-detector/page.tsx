@@ -14,6 +14,7 @@ type Question = {
   category: string;
   options: Option[];
   whyItMatters: string;
+  singleSelect?: boolean; // New property to mark single-select questions
 };
 
 const questions: Question[] = [
@@ -52,6 +53,7 @@ const questions: Question[] = [
     id: 3,
     question: "How technical do you want your daily work to be?",
     category: "Technical depth slider",
+    singleSelect: true, // This question is single-select
     options: [
       { text: "🔧 Very technical (coding, systems, architecture)" },
       { text: "⚙️ Moderately technical (tools + configuration)" },
@@ -128,10 +130,21 @@ export default function InterestDetector() {
 
   const currentQuestion = questions[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
+  const isSingleSelect = currentQuestion.singleSelect === true;
 
   const handleSelectOption = (option: string) => {
     setAnswers((prev) => {
       const currentAnswers = prev[currentQuestionIndex] || [];
+      
+      // If single-select question, replace the answer
+      if (isSingleSelect) {
+        return {
+          ...prev,
+          [currentQuestionIndex]: [option],
+        };
+      }
+      
+      // Multi-select: toggle the option
       if (currentAnswers.includes(option)) {
         return {
           ...prev,
@@ -257,9 +270,14 @@ export default function InterestDetector() {
               </div>
 
               {/* Question */}
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-12 leading-tight">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 leading-tight">
                 {currentQuestion.question}
               </h2>
+              
+              {/* Selection hint */}
+              <p className="text-sm text-gray-500 mb-10">
+                {isSingleSelect ? "Select one option" : "Select all that apply"}
+              </p>
 
               {/* Options */}
               <div className="space-y-3 mb-10">
