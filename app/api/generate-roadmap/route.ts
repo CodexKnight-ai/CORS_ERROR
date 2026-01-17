@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { RoadmapGenerationRequest, Roadmap, Module } from "@/lib/types/roadmap";
+import videosData from "@/lib/data/videos.json";
 
 const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY;
 const MISTRAL_MODEL = process.env.MISTRAL_MODEL || "open-mistral-7b";
 
 export async function POST(request: NextRequest) {
   try {
-    const { careerId, careerData }: RoadmapGenerationRequest = await request.json();
+    const { careerId, careerData, missingSkills, recognizedSkills, gapAnalysis }: RoadmapGenerationRequest = await request.json();
 
     if (!careerId || !careerData) {
       return NextResponse.json(
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
     const startTime = Date.now();
 
     // Construct the prompt for Mistral AI
-    const prompt = buildRoadmapPrompt(careerData);
+    const prompt = buildRoadmapPrompt(careerData, missingSkills, recognizedSkills, gapAnalysis);
 
     // Call Mistral AI API
     const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse AI response to extract roadmap
-    const roadmap = parseAIRoadmap(aiResponse, careerId, careerData.field_name);
+    const roadmap = parseAIRoadmap(aiResponse, careerId, careerData.field_name, missingSkills || [], recognizedSkills || []);
 
     const generationTime = Date.now() - startTime;
 
@@ -88,47 +89,59 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function buildRoadmapPrompt(careerData: any): string {
-  return `Create a comprehensive learning roadmap for: ${careerData.field_name}
+function buildRoadmapPrompt(careerData: any, missingSkills: string[] = [], recognizedSkills: string[] = [], gapAnalysis?: any): string {
+  const missingContext = missingSkills.length > 0 
+    ? `The user lacks these specific skills: ${missingSkills.join(", ")}.`
+    : "The user is starting fresh.";
+    
+  const recognizedContext = recognizedSkills.length > 0
+    ? `The user already knows: ${recognizedSkills.join(", ")}.`
+    : "No prior relevant skills.";
 
-Career Details:
-- Description: ${careerData.field_description}
-- Required Skills: ${careerData.skills_required.join(", ")}
-- Difficulty Level: ${careerData.difficulty_rating}/10
-- Entry Duration: ${careerData.entry_level_duration}
+  return `
+**Role**: You are an expert AI Career Coach & Curriculum Designer.
+**Goal**: Create a hyper-personalized learning roadmap for the role of "${careerData.field_name}" that specifically targets the user's skill gaps.
+**Context**: 
+- **Role Description**: ${careerData.field_description}
+- **Required Skills**: ${careerData.skills_required.join(", ")}
+- **User's Current State**: ${recognizedContext}
+- **Gap Analysis**: ${missingContext}
+  ${gapAnalysis ? `(Foundational: ${gapAnalysis.foundational_gaps?.join(", ")}, Intermediate: ${gapAnalysis.intermediate_gaps?.join(", ")})` : ""}
+- **Target Audience**: A motivated learner seeking a ${careerData.difficulty_rating}/10 difficulty path (entry time: ${careerData.entry_level_duration}).
 
-Generate a structured learning path with 5-7 modules. Each module should have:
-- A clear title (e.g., "Module 1: Fundamentals of Healthcare IT")
-- Brief description of what will be learned
-- Estimated duration
-- 3-5 sub-modules with specific topics
+**Instructions**:
+1. Design 5-7 learning modules.
+2. **CRITICAL**: Each module must explicitly address one or more of the "Missing Skills". 
+3. Include a "relatedSkills" array in each module listing exactly which missing skills are covered by that module.
+4. If a module covers a foundational gap, place it earlier.
 
-IMPORTANT: Return ONLY a valid JSON object in this exact format:
+**Output Format**:
+Return ONLY a valid JSON object matching this structure:
 {
   "modules": [
     {
       "id": "module-1",
-      "title": "Module 1: Foundation & Basics",
-      "description": "Build foundational knowledge",
+      "title": "Module 1: [Topic]",
+      "description": "Brief description",
       "duration": "2-3 weeks",
+      "relatedSkills": ["Skill A", "Skill B"], // MUST map to the missing skills list
       "subModules": [
         {
           "id": "sub-1-1",
-          "title": "Introduction to Healthcare Systems",
-          "topics": ["Healthcare delivery models", "EHR basics", "HIPAA fundamentals"],
-          "duration": "3-4 days",
-          "resources": ["Online courses", "Documentation", "Practice exercises"]
+          "title": "Subtopic Title",
+          "topics": ["Detail 1", "Detail 2"],
+          "duration": "3 days",
+          "resources": ["Course link", "Docs"]
         }
       ]
     }
   ],
   "estimatedDuration": "3-4 months"
 }
-
-Create a practical, progressive learning path from beginner to job-ready level.`;
+`;
 }
 
-function parseAIRoadmap(aiResponse: string, careerId: number, careerName: string): Roadmap {
+function parseAIRoadmap(aiResponse: string, careerId: number, careerName: string, missingSkills: string[], recognizedSkills: string[]): Roadmap {
   try {
     // Extract JSON from the response
     const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
@@ -143,6 +156,7 @@ function parseAIRoadmap(aiResponse: string, careerId: number, careerName: string
       ...module,
       status: 'pending' as const,
       progress: 0,
+      relatedSkills: module.relatedSkills || [],
       subModules: module.subModules.map((sub: any) => ({
         ...sub,
         completed: false,
@@ -159,18 +173,20 @@ function parseAIRoadmap(aiResponse: string, careerId: number, careerName: string
       overallProgress: 0,
       estimatedDuration: parsed.estimatedDuration || "3-6 months",
       videos,
+      recognizedSkills,
+      missingSkills
     };
   } catch (error) {
     console.error("Error parsing AI roadmap:", error);
     // Fallback: return a basic roadmap structure
-    return createFallbackRoadmap(careerId, careerName);
+    return createFallbackRoadmap(careerId, careerName, missingSkills, recognizedSkills);
   }
 }
 
 function loadCuratedVideos(careerName: string, modules: Module[]): Record<string, any[]> {
   try {
     // Import videos data
-    const videosData = require("@/lib/data/videos.json");
+    // const videosData = require("@/lib/data/videos.json"); // Replaced with top-level import
     
     // Normalize career name to match video database keys
     const careerKey = careerName.toLowerCase().replace(/\s+/g, '-');
@@ -192,13 +208,15 @@ function loadCuratedVideos(careerName: string, modules: Module[]): Record<string
   }
 }
 
-function createFallbackRoadmap(careerId: number, careerName: string): Roadmap {
+function createFallbackRoadmap(careerId: number, careerName: string, missingSkills: string[] = [], recognizedSkills: string[] = []): Roadmap {
   return {
     careerId,
     careerName,
     estimatedDuration: "3-6 months",
     overallProgress: 0,
     videos: {},
+    recognizedSkills,
+    missingSkills,
     modules: [
       {
         id: "module-1",
@@ -207,6 +225,7 @@ function createFallbackRoadmap(careerId: number, careerName: string): Roadmap {
         duration: "2-3 weeks",
         status: "pending",
         progress: 0,
+        relatedSkills: missingSkills.slice(0, 2), // Mock link to missing skills
         subModules: [
           {
             id: "sub-1-1",
@@ -233,6 +252,7 @@ function createFallbackRoadmap(careerId: number, careerName: string): Roadmap {
         duration: "4-6 weeks",
         status: "pending",
         progress: 0,
+        relatedSkills: missingSkills.slice(2, 4),
         subModules: [
           {
             id: "sub-2-1",
@@ -252,32 +272,7 @@ function createFallbackRoadmap(careerId: number, careerName: string): Roadmap {
           },
         ],
       },
-      {
-        id: "module-3",
-        title: "Module 3: Advanced Topics",
-        description: "Master advanced concepts and specializations",
-        duration: "4-6 weeks",
-        status: "pending",
-        progress: 0,
-        subModules: [
-          {
-            id: "sub-3-1",
-            title: "Specialized Skills",
-            topics: ["Advanced techniques", "Optimization", "Best practices"],
-            duration: "2-3 weeks",
-            resources: ["Advanced courses", "Certifications"],
-            completed: false,
-          },
-          {
-            id: "sub-3-2",
-            title: "Industry Standards",
-            topics: ["Compliance", "Regulations", "Quality assurance"],
-            duration: "1-2 weeks",
-            resources: ["Official documentation", "Standards guides"],
-            completed: false,
-          },
-        ],
-      },
     ],
   };
 }
+

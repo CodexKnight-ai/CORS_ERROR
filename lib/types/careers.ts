@@ -1,3 +1,25 @@
+import type { Module } from "./roadmap";
+
+// Dashboard Types
+export interface DashboardRoadmap {
+  careerId: number;
+  careerName: string;
+  matchScore: number;
+  addedAt: Date;
+  lastAccessed?: Date;
+  progress: number; // 0-100
+  modules: Module[];
+  recognizedSkills: string[];
+  missingSkills: string[];
+}
+
+export interface DashboardState {
+  roadmaps: DashboardRoadmap[];
+  count: number;
+  maxRoadmaps: number; // 3
+}
+
+// Career Types
 export interface Career {
   id: number;
   category: string;
@@ -38,32 +60,10 @@ export interface Career {
   typical_companies: string[];
 }
 
-export interface UserAnswers {
-  [questionIndex: number]: string[];
-}
+export type UserAnswers = Record<string, string[]>;
 
 export interface CareerRecommendation {
   career: Career;
   matchScore: number;
   reasoning: string;
-}
-
-export interface RecommendationResponse {
-  recommendations: CareerRecommendation[];
-  analysisTime: number;
-}
-
-export interface DashboardRoadmap {
-  careerId: number;
-  careerName: string;
-  matchScore: number;
-  addedAt: Date;
-  lastAccessed?: Date;
-  progress: number; // 0-100
-}
-
-export interface DashboardState {
-  roadmaps: DashboardRoadmap[];
-  count: number;
-  maxRoadmaps: number; // 3
 }

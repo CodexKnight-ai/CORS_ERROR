@@ -1,5 +1,25 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
+export interface ISubModule {
+  id: string;
+  title: string;
+  topics: string[];
+  duration: string;
+  resources: string[];
+  completed?: boolean;
+}
+
+export interface IModule {
+  id: string;
+  title: string;
+  description: string;
+  duration: string;
+  subModules: ISubModule[];
+  status: 'pending' | 'in-progress' | 'completed';
+  progress: number;
+  relatedSkills: string[];
+}
+
 export interface IDashboardRoadmap {
   careerId: number;
   careerName: string;
@@ -7,6 +27,15 @@ export interface IDashboardRoadmap {
   addedAt: Date;
   lastAccessed?: Date;
   progress: number;
+  modules: IModule[]; // Store full roadmap structure
+  recognizedSkills: string[];
+  missingSkills: string[];
+  skillsAcquired: string[]; // Skills acquired through module completion
+  gapAnalysis?: {
+    foundational_gaps: string[];
+    intermediate_gaps: string[];
+    advanced_gaps: string[];
+  };
 }
 
 export interface IUserDashboard extends Document {
@@ -17,6 +46,36 @@ export interface IUserDashboard extends Document {
   updatedAt: Date;
 }
 
+const SubModuleSchema = new Schema({
+  id: { type: String, required: true },
+  title: { type: String, required: true },
+  topics: [String],
+  duration: { type: String },
+  resources: [String],
+  completed: { type: Boolean, default: false }
+});
+
+const ModuleSchema = new Schema({
+  id: { type: String, required: true },
+  title: { type: String, required: true },
+  description: { type: String },
+  duration: { type: String },
+  subModules: [SubModuleSchema],
+  status: { 
+    type: String, 
+    enum: ['pending', 'in-progress', 'completed'],
+    default: 'pending'
+  },
+  progress: { type: Number, default: 0 },
+  relatedSkills: [String]
+});
+
+const GapAnalysisSchema = new Schema({
+  foundational_gaps: { type: [String], default: [] },
+  intermediate_gaps: { type: [String], default: [] },
+  advanced_gaps: { type: [String], default: [] }
+}, { _id: false });
+
 const DashboardRoadmapSchema = new Schema({
   careerId: { type: Number, required: true },
   careerName: { type: String, required: true },
@@ -24,6 +83,11 @@ const DashboardRoadmapSchema = new Schema({
   addedAt: { type: Date, default: Date.now },
   lastAccessed: { type: Date },
   progress: { type: Number, default: 0 },
+  modules: { type: [ModuleSchema], default: [] },
+  recognizedSkills: { type: [String], default: [] },
+  missingSkills: { type: [String], default: [] },
+  skillsAcquired: { type: [String], default: [] },
+  gapAnalysis: { type: GapAnalysisSchema, default: null }
 });
 
 const UserDashboardSchema = new Schema<IUserDashboard>(
