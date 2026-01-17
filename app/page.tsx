@@ -109,9 +109,6 @@ const LandingPage = () => {
           <p className="text-lg sm:text-xl text-zinc-400 mb-10 max-w-2xl mx-auto leading-relaxed">
             A unified platform that captures your skills, analyzes your progress, and guides your career path in healthcare, agriculture, and urban planning.
           </p>
-          
-
-[Image of career pathway diagram]
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
             <Link href="/dashboard">
@@ -129,7 +126,7 @@ const LandingPage = () => {
             {[
               { val: '10k+', label: 'Active Users' },
               { val: '95%', label: 'Success Rate' },
-              { val: '3', label: 'Key Sectors' }
+              { val: '20+', label: 'Key Fields' }
             ].map((stat, i) => (
               <div key={i} className="flex flex-col items-center">
                 <span className="text-2xl sm:text-3xl font-bold text-white mb-1">{stat.val}</span>
@@ -192,10 +189,6 @@ const LandingPage = () => {
                 <p className="text-sm text-zinc-500 leading-relaxed">
                   {feature.desc}
                 </p>
-                
-
-[Image of skill gap analysis chart]
-
               </div>
             ))}
           </div>
