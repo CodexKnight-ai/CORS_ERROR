@@ -15,6 +15,7 @@ export interface Module {
   subModules: SubModule[];
   status: 'pending' | 'in-progress' | 'completed';
   progress: number; // 0-100
+  relatedSkills: string[]; // Skills learned in this module
 }
 
 export interface YouTubeVideo {
@@ -33,6 +34,9 @@ export interface Roadmap {
   overallProgress: number;
   estimatedDuration: string;
   videos: Record<string, YouTubeVideo[]>; // moduleId -> videos
+  recognizedSkills: string[];
+  missingSkills: string[];
+  gapAnalysis?: GapAnalysis;
 }
 
 export interface UserProgress {
@@ -44,6 +48,12 @@ export interface UserProgress {
   lastUpdated: Date;
 }
 
+export interface GapAnalysis {
+  foundational_gaps: string[];
+  intermediate_gaps: string[];
+  advanced_gaps: string[];
+}
+
 export interface RoadmapGenerationRequest {
   careerId: number;
   careerData: {
@@ -53,6 +63,9 @@ export interface RoadmapGenerationRequest {
     entry_level_duration: string;
     field_description: string;
   };
+  missingSkills?: string[];
+  recognizedSkills?: string[];
+  gapAnalysis?: GapAnalysis;
 }
 
 export interface RoadmapGenerationResponse {

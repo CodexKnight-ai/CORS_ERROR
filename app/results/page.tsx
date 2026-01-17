@@ -42,10 +42,57 @@ export default function Results() {
   const handleAddToDashboard = async (careerId: number, careerName: string, matchScore: number) => {
     setAddingToDashboard(careerId);
     try {
+      // Find the career data
+      const career = recommendations.find(r => r.career.id === careerId)?.career;
+      if (!career) {
+        alert("Career data not found");
+        return;
+      }
+
+      // Step 1: Generate roadmap with career data
+      // Note: In a full implementation, you would call suggest-roles API here to get skill gap
+      // For now, we'll use the career's skills_required as missing skills
+      const roadmapResponse = await fetch("/api/generate-roadmap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          careerId,
+          careerData: {
+            field_name: career.field_name,
+            field_description: career.field_description,
+            skills_required: career.skills_required,
+            difficulty_rating: career.difficulty_rating,
+            entry_level_duration: career.entry_level_duration,
+          },
+          recognizedSkills: [], // Would come from suggest-roles API
+          missingSkills: career.skills_required, // Would come from suggest-roles API
+          gapAnalysis: {
+            foundational_gaps: [],
+            intermediate_gaps: [],
+            advanced_gaps: [],
+          },
+        }),
+      });
+
+      if (!roadmapResponse.ok) {
+        throw new Error("Failed to generate roadmap");
+      }
+
+      const { roadmap } = await roadmapResponse.json();
+
+      // Step 2: Add to dashboard with roadmap data
       const response = await fetch("/api/dashboard", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ careerId, careerName, matchScore }),
+        body: JSON.stringify({
+          careerId,
+          careerName,
+          matchScore,
+          modules: roadmap.modules,
+          recognizedSkills: roadmap.recognizedSkills || [],
+          missingSkills: roadmap.missingSkills || [],
+          gapAnalysis: roadmap.gapAnalysis || null,
+        }),
       });
 
       if (response.ok) {

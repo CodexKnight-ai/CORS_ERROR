@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, CheckCircle2, Circle, ChevronDown, ChevronUp, Clock, Award } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Circle, ChevronDown, ChevronUp, Clock, Award, Target } from "lucide-react";
 import type { Roadmap, Module, SubModule } from "@/lib/types/roadmap";
 import careersData from "@/lib/data/careers.json";
 import { saveProgress, loadProgress, calculateModuleProgress, updateModuleStatus } from "@/lib/utils/progress";
 import VideoRecommendations from "@/components/roadmap/VideoRecommendations";
+import SkillGapAnalysis from "@/components/roadmap/SkillGapAnalysis";
+import CircularProgress from "@/components/roadmap/CircularProgress";
 
 export default function RoadmapPage() {
   const params = useParams();
@@ -18,6 +20,30 @@ export default function RoadmapPage() {
   const [loading, setLoading] = useState(true);
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
   const [completedSubModules, setCompletedSubModules] = useState<Set<string>>(new Set());
+
+  // Calculate acquired skills based on completed modules
+  const acquiredSkills = useMemo(() => {
+    if (!roadmap) return new Set<string>();
+    const skills = new Set<string>();
+    roadmap.modules.forEach(module => {
+      if (module.status === 'completed' && module.relatedSkills) {
+        module.relatedSkills.forEach(skill => skills.add(skill));
+      }
+    });
+    return skills;
+  }, [roadmap]);
+
+  // Calculate skill acquisition progress percentage
+  const skillAcquisitionProgress = useMemo(() => {
+    if (!roadmap || !roadmap.missingSkills || roadmap.missingSkills.length === 0) return 0;
+    
+    const normalizedAcquired = new Set(Array.from(acquiredSkills).map(s => s.toLowerCase()));
+    const learnedCount = roadmap.missingSkills.filter(skill => 
+      normalizedAcquired.has(skill.toLowerCase())
+    ).length;
+    
+    return Math.round((learnedCount / roadmap.missingSkills.length) * 100);
+  }, [roadmap, acquiredSkills]);
 
   useEffect(() => {
     loadRoadmap();
@@ -32,54 +58,121 @@ export default function RoadmapPage() {
         return;
       }
 
-      // Check if roadmap exists in sessionStorage
-      let storedRoadmap = sessionStorage.getItem(`roadmap_${careerId}`);
-      
-      if (!storedRoadmap) {
-        // Generate new roadmap via API
-        const response = await fetch("/api/generate-roadmap", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            careerId,
-            careerData: {
-              field_name: career.field_name,
-              field_description: career.field_description,
-              skills_required: career.skills_required,
-              difficulty_rating: career.difficulty_rating,
-              entry_level_duration: career.entry_level_duration,
-            },
-          }),
-        });
+      let parsedRoadmap: Roadmap | null = null;
+      let isInDashboard = false;
 
-        if (!response.ok) throw new Error("Failed to generate roadmap");
-
-        const data = await response.json();
-        sessionStorage.setItem(`roadmap_${careerId}`, JSON.stringify(data.roadmap));
-        storedRoadmap = JSON.stringify(data.roadmap);
+      // 1. Try to load from Dashboard API (Persistent Store)
+      try {
+        const dashboardRes = await fetch("/api/dashboard");
+        if (dashboardRes.ok) {
+          const dashboardData = await dashboardRes.json();
+          const dashboardRoadmap = dashboardData.roadmaps.find((r: any) => r.careerId === careerId);
+          
+          if (dashboardRoadmap) {
+            isInDashboard = true;
+            // If dashboard has modules, use them (Single Source of Truth)
+            if (dashboardRoadmap.modules && dashboardRoadmap.modules.length > 0) {
+              parsedRoadmap = {
+                careerName: dashboardRoadmap.careerName,
+                matchScore: dashboardRoadmap.matchScore,
+                estimatedDuration: "Flexible", // Dashboard might not store this, defaulting
+                modules: dashboardRoadmap.modules,
+                overallProgress: dashboardRoadmap.progress || 0,
+                reasoning: "", // Dashboard doesn't store reasoning usually
+                videos: {}, // Videos might need to be regenerated or stored if we want persistence
+                recognizedSkills: dashboardRoadmap.recognizedSkills || [],
+                missingSkills: dashboardRoadmap.missingSkills || [],
+              };
+              
+              // If estimatedDuration missing, pick from career data or first module
+              if (parsedRoadmap && !parsedRoadmap.estimatedDuration) {
+                 parsedRoadmap.estimatedDuration = career.entry_level_duration || "Flexible";
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching dashboard:", err);
       }
 
-      const parsedRoadmap: Roadmap = JSON.parse(storedRoadmap);
+      // 2. If not in dashboard (or empty), check sessionStorage
+      if (!parsedRoadmap) {
+        let storedRoadmap = sessionStorage.getItem(`roadmap_${careerId}`);
+        
+        if (!storedRoadmap) {
+          // 3. Generate new roadmap via API
+          const response = await fetch("/api/generate-roadmap", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              careerId,
+              careerData: {
+                field_name: career.field_name,
+                field_description: career.field_description,
+                skills_required: career.skills_required,
+                difficulty_rating: career.difficulty_rating,
+                entry_level_duration: career.entry_level_duration,
+              },
+              // Pass skills for Gap Analysis
+              missingSkills: career.skills_required || [], 
+              recognizedSkills: [], // Assume fresh start
+            }),
+          });
 
-      // Load progress from localStorage
+          if (!response.ok) throw new Error("Failed to generate roadmap");
+
+          const data = await response.json();
+          // Ensure missingSkills are populated if AI returned empty (fallback)
+          if (!data.roadmap.missingSkills || data.roadmap.missingSkills.length === 0) {
+            data.roadmap.missingSkills = career.skills_required || [];
+          }
+
+          sessionStorage.setItem(`roadmap_${careerId}`, JSON.stringify(data.roadmap));
+          storedRoadmap = JSON.stringify(data.roadmap);
+          
+          // If the roadmap exists in dashboard (but was empty), SAVE the generated modules now
+          if (isInDashboard) {
+             await fetch("/api/dashboard", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                   careerId,
+                   modules: data.roadmap.modules,
+                   recognizedSkills: data.roadmap.recognizedSkills || [],
+                   missingSkills: data.roadmap.missingSkills || [],
+                })
+             });
+          }
+        }
+
+        parsedRoadmap = JSON.parse(storedRoadmap!);
+      }
+
+      if (!parsedRoadmap) throw new Error("Could not load roadmap");
+
+      // Load progress from localStorage (Still useful for immediate local updates, 
+      // but Dashboard SHOULD be the source of truth if we fetched from it. 
+      // We'll merge: if Dashboard had progress, we rely on that. 
+      // If we generated fresh, we allow localStorage to override (legacy/offline support))
+      
       const progress = loadProgress(careerId);
       if (progress) {
         setCompletedSubModules(new Set(progress.completedSubModules));
         
-        // Update roadmap with progress
+        // Update roadmap with local progress matching
         parsedRoadmap.modules = parsedRoadmap.modules.map(module => {
-          const moduleProgress = progress.moduleProgress[module.id] || 0;
+          const moduleProgress = progress.moduleProgress[module.id] || module.progress || 0; // Prefer local or existing
           return {
             ...module,
             progress: moduleProgress,
             status: updateModuleStatus(moduleProgress),
             subModules: module.subModules.map(sub => ({
               ...sub,
-              completed: progress.completedSubModules.includes(sub.id),
+              completed: progress.completedSubModules.includes(sub.id) || sub.completed,
             })),
           };
         });
-        parsedRoadmap.overallProgress = progress.overallProgress;
+        parsedRoadmap.overallProgress = Math.max(progress.overallProgress, parsedRoadmap.overallProgress || 0);
       }
 
       setRoadmap(parsedRoadmap);
@@ -153,11 +246,19 @@ export default function RoadmapPage() {
     // Save to localStorage
     saveProgress(careerId, Array.from(newCompleted), moduleProgress, overallProgress);
     
-    // Sync progress to dashboard (MongoDB)
-    syncProgressToDashboard(careerId, overallProgress);
+    // Collect newly acquired skills from completed modules
+    const newlyAcquiredSkills: string[] = [];
+    updatedModules.forEach(module => {
+      if (module.status === 'completed' && module.relatedSkills) {
+        newlyAcquiredSkills.push(...module.relatedSkills);
+      }
+    });
+    
+    // Sync progress and skills to dashboard (MongoDB)
+    syncProgressToDashboard(careerId, overallProgress, newlyAcquiredSkills);
   };
 
-  const syncProgressToDashboard = async (careerId: number, progress: number) => {
+  const syncProgressToDashboard = async (careerId: number, progress: number, skillsAcquired: string[] = []) => {
     try {
       await fetch("/api/dashboard", {
         method: "PATCH",
@@ -165,9 +266,22 @@ export default function RoadmapPage() {
         body: JSON.stringify({ 
           careerId, 
           progress,
+          skillsAcquired,
           updateLastAccessed: true 
         }),
       });
+      
+      // Also sync to skill-gap API if skills were acquired
+      if (skillsAcquired.length > 0) {
+        await fetch("/api/skill-gap", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            careerId,
+            acquiredSkills: skillsAcquired
+          }),
+        });
+      }
     } catch (error) {
       console.error("Error syncing progress to dashboard:", error);
       // Silent fail - localStorage still works
@@ -203,6 +317,24 @@ export default function RoadmapPage() {
 
   return (
     <div className="min-h-screen bg-black text-white font-poppins">
+      {/* Floating Skill Progress Indicator */}
+      {roadmap.missingSkills && roadmap.missingSkills.length > 0 && (
+        <div className="fixed top-6 right-6 z-50 bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-2xl">
+          <CircularProgress 
+            percentage={skillAcquisitionProgress}
+            size={80}
+            strokeWidth={8}
+            label="Skills Acquired"
+            showPercentage={true}
+          />
+          <div className="mt-2 text-center text-xs text-gray-400">
+            {Array.from(acquiredSkills).filter(skill => 
+              roadmap.missingSkills.some(m => m.toLowerCase() === skill.toLowerCase())
+            ).length} of {roadmap.missingSkills.length}
+          </div>
+        </div>
+      )}
+      
       {/* Header */}
       <div className="border-b border-white/10">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6">
@@ -245,6 +377,15 @@ export default function RoadmapPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
+        {/* Skill Gap Analysis */}
+        {(roadmap.recognizedSkills?.length > 0 || roadmap.missingSkills?.length > 0) && (
+          <SkillGapAnalysis 
+            recognizedSkills={roadmap.recognizedSkills || []}
+            missingSkills={roadmap.missingSkills || []}
+            acquiredSkills={acquiredSkills}
+          />
+        )}
+
         {/* Module Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {roadmap.modules.map((module, index) => {
@@ -301,6 +442,22 @@ export default function RoadmapPage() {
                   </div>
 
                   <p className="text-sm text-gray-400 mb-4">{module.description}</p>
+                  
+                  {/* Related Skills Badge */}
+                  {module.relatedSkills && module.relatedSkills.length > 0 && (
+                     <div className="flex flex-wrap gap-1 mb-4">
+                        {module.relatedSkills.slice(0, 3).map((skill, i) => (
+                           <span key={i} className="px-1.5 py-0.5 bg-blue-500/10 text-blue-300 text-[10px] rounded border border-blue-500/20">
+                              {skill}
+                           </span>
+                        ))}
+                        {module.relatedSkills.length > 3 && (
+                           <span className="px-1.5 py-0.5 bg-gray-500/10 text-gray-400 text-[10px] rounded border border-gray-500/20">
+                              +{module.relatedSkills.length - 3}
+                           </span>
+                        )}
+                     </div>
+                  )}
 
                   <div className="flex items-center gap-4 mb-4">
                     <div className="flex items-center gap-1.5 text-xs text-gray-400">
@@ -342,6 +499,23 @@ export default function RoadmapPage() {
                       className="border-t border-white/10"
                     >
                       <div className="p-6 space-y-4">
+                        {/* Skills Covered in Module Breakdown */}
+                        {module.relatedSkills && module.relatedSkills.length > 0 && (
+                          <div className="mb-4 p-3 bg-blue-500/5 rounded-lg border border-blue-500/10">
+                            <h5 className="text-xs font-semibold text-blue-300 mb-2 flex items-center gap-1">
+                              <Target className="w-3 h-3" />
+                              Skills you'll master:
+                            </h5>
+                            <div className="flex flex-wrap gap-2">
+                              {module.relatedSkills.map((skill, i) => (
+                                <span key={i} className="text-xs text-gray-300 bg-black/20 px-2 py-1 rounded">
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
                         <h4 className="font-semibold mb-3">Sub-Modules:</h4>
                         {module.subModules.map((subModule, subIndex) => (
                           <motion.div
