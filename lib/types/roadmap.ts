@@ -30,12 +30,14 @@ export interface YouTubeVideo {
 export interface Roadmap {
   careerId: number;
   careerName: string;
+  matchScore?: number;
   modules: Module[];
   overallProgress: number;
   estimatedDuration: string;
   videos: Record<string, YouTubeVideo[]>; // moduleId -> videos
   recognizedSkills: string[];
   missingSkills: string[];
+  reasoning?: string;
   gapAnalysis?: GapAnalysis;
 }
 

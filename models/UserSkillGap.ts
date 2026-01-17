@@ -45,16 +45,17 @@ const UserSkillGapSchema = new Schema<IUserSkillGap>(
 UserSkillGapSchema.index({ userId: 1, careerId: 1 }, { unique: true });
 
 // Virtual to calculate progress percentage
-UserSkillGapSchema.pre('save', function(next) {
-  if (this.missingSkills.length > 0) {
-    const acquired = this.skillsAcquired.filter(skill => 
-      this.missingSkills.some(missing => 
+UserSkillGapSchema.pre('save', function(next: (err?: Error) => void) {
+  const self = this as unknown as IUserSkillGap;
+  if (self.missingSkills.length > 0) {
+    const acquired = self.skillsAcquired.filter(skill => 
+      self.missingSkills.some(missing => 
         missing.toLowerCase() === skill.toLowerCase()
       )
     );
-    this.progressPercentage = Math.round((acquired.length / this.missingSkills.length) * 100);
+    self.progressPercentage = Math.round((acquired.length / self.missingSkills.length) * 100);
   } else {
-    this.progressPercentage = 100;
+    self.progressPercentage = 100;
   }
   next();
 });

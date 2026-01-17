@@ -73,6 +73,7 @@ export default function RoadmapPage() {
             // If dashboard has modules, use them (Single Source of Truth)
             if (dashboardRoadmap.modules && dashboardRoadmap.modules.length > 0) {
               parsedRoadmap = {
+                careerId,
                 careerName: dashboardRoadmap.careerName,
                 matchScore: dashboardRoadmap.matchScore,
                 estimatedDuration: "Flexible", // Dashboard might not store this, defaulting

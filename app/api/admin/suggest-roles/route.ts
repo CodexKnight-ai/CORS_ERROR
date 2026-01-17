@@ -25,14 +25,14 @@ export async function POST(req: Request) {
         const evidenceEmbeddings = await Promise.all(
             userEvidence.map(async (item) => {
                 const out = await extractor(item.text, { pooling: 'mean', normalize: true });
-                return { ...item, embedding: Array.from(out.data) };
+                return { ...item, embedding: Array.from(out.data) as number[] };
             })
         );
 
         // 2. Global Search
         const globalText = userEvidence.map(e => e.text).join(' ');
         const globalOut = await extractor(globalText, { pooling: 'mean', normalize: true });
-        const globalEmbedding = Array.from(globalOut.data);
+        const globalEmbedding = Array.from(globalOut.data) as number[];
 
         let { data: matches, error } = await supabase.rpc('match_jobs', {
             query_embedding: globalEmbedding,
@@ -58,7 +58,7 @@ export async function POST(req: Request) {
             for (const section of Object.values(categories)) {
                 for (const reqSkill of section) {
                     const reqOut = await extractor(reqSkill, { pooling: 'mean', normalize: true });
-                    const reqVec = Array.from(reqOut.data);
+                    const reqVec = Array.from(reqOut.data) as number[];
 
                     let isFound = false;
                     for (const evidence of evidenceEmbeddings) {
