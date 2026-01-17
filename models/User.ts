@@ -1,16 +1,42 @@
 import mongoose, { Schema, Model, Document } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
-export interface IUser extends Document {
-  username: string;
-  email: string;
-  password?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  comparePassword(candidatePassword: string): Promise<boolean>;
-}
+// export interface IUser extends Document {
+//   username: string;
+//   email: string;
+//   password?: string;
+//   createdAt: Date;
+//   updatedAt: Date;
+//   comparePassword(candidatePassword: string): Promise<boolean>;
+// }
 
-const UserSchema = new Schema<IUser>(
+const EducationSchema = new Schema(
+  {
+    institution: { type: String, required: true, trim: true },
+    degree: { type: String, required: true, trim: true },
+    year: { type: String, required: true, trim: true }, // keeping as string as per your JSON
+    cgpa: { type: String, required: true, trim: true }, // keeping as string as per your JSON
+  },
+  { _id: false }
+);
+
+const ProjectSchema = new Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    description: { type: String, required: true, trim: true },
+  },
+  { _id: false }
+);
+
+const AchievementSchema = new Schema(
+  {
+    title: { type: String, required: true, trim: true },
+    description: { type: String, required: true, trim: true },
+  },
+  { _id: false }
+);
+
+const UserSchema = new Schema(
   {
     username: {
       type: String,
@@ -36,6 +62,10 @@ const UserSchema = new Schema<IUser>(
       minlength: [6, 'Password must be at least 6 characters long'],
       select: false,
     },
+    skills: { type: [String], default: [] },
+    education: { type: [EducationSchema], default: [] },
+    projects: { type: [ProjectSchema], default: [] },
+    achievements: { type: [AchievementSchema], default: [] },
   },
   {
     timestamps: true,
@@ -63,7 +93,7 @@ UserSchema.methods.comparePassword = async function (candidatePassword: string) 
 };
 
 // Check if model already exists to prevent overwrite error in hot reload
-const User: Model<IUser> =
-  mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
+const User =
+  mongoose.models.User || mongoose.model('User', UserSchema);
 
 export default User;
