@@ -405,11 +405,11 @@ export default function RoadmapPage() {
                 transition={{ duration: 0.3, delay: index * 0.05 }}
                 whileHover={{ scale: isExpanded ? 1 : 1.02 }}
                 className={`
-                  border rounded-xl overflow-hidden transition-all duration-300
-                  backdrop-blur-sm
+                  border rounded-3xl overflow-hidden transition-all duration-300
+                  backdrop-blur-xl
                   ${isExpanded 
-                    ? 'md:col-span-2 lg:col-span-3 border-green-500/30 bg-gradient-to-br from-green-500/10 to-white/5 shadow-2xl shadow-green-500/10' 
-                    : 'border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] hover:border-green-500/30 hover:bg-white/10 hover:shadow-[0_0_20px_rgba(34,197,94,0.15)]'
+                    ? 'md:col-span-2 lg:col-span-3 border-white/20 bg-white/10 shadow-2xl' 
+                    : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 hover:shadow-xl'
                   }
                 `}
               >
@@ -433,11 +433,12 @@ export default function RoadmapPage() {
                     <motion.div
                       animate={{ rotate: isExpanded ? 180 : 0 }}
                       transition={{ duration: 0.3 }}
+                      className="p-2 rounded-full bg-white/5"
                     >
                       {isExpanded ? (
-                        <ChevronUp className="w-5 h-5 text-gray-400" />
+                        <ChevronUp className="w-5 h-5 text-white" />
                       ) : (
-                        <ChevronDown className="w-5 h-5 text-gray-400" />
+                        <ChevronDown className="w-5 h-5 text-zinc-400 group-hover:text-white transition-colors" />
                       )}
                     </motion.div>
                   </div>

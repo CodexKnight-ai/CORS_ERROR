@@ -214,11 +214,11 @@ export default function Results() {
                 transition={{ duration: 0.5, delay: index * 0.1, ease: "easeInOut" }}
                 whileHover={{ scale: isExpanded ? 1 : 1.02 }}
                 className={`
-                  relative border rounded-xl overflow-hidden transition-all duration-300
-                  backdrop-blur-sm
+                  relative border rounded-3xl overflow-hidden transition-all duration-300
+                  backdrop-blur-xl
                   ${isSelected 
-                    ? 'border-green-500/50 bg-gradient-to-br from-green-500/10 to-white/5 shadow-[0_0_30px_rgba(34,197,94,0.3)]' 
-                    : 'border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] hover:border-green-500/30 hover:shadow-[0_0_20px_rgba(34,197,94,0.15)]'
+                    ? 'border-green-500/50 bg-green-500/10 shadow-[0_0_30px_rgba(34,197,94,0.3)]' 
+                    : 'border-white/10 bg-white/5 hover:border-white/20 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]'
                   }
                   ${isExpanded ? 'shadow-2xl shadow-green-500/10' : 'hover:shadow-xl'}
                 `}
@@ -236,12 +236,12 @@ export default function Results() {
                         <motion.div
                           animate={{ rotate: isExpanded ? 180 : 0 }}
                           transition={{ duration: 0.3, ease: "easeInOut" }}
-                          className="flex-shrink-0"
+                          className="flex-shrink-0 p-2 rounded-full bg-white/5"
                         >
                           {isExpanded ? (
                             <ChevronUp className="w-6 h-6 text-green-400" />
                           ) : (
-                            <ChevronDown className="w-6 h-6 text-gray-400 group-hover:text-green-400 transition-colors" />
+                            <ChevronDown className="w-6 h-6 text-zinc-400 group-hover:text-green-400 transition-colors" />
                           )}
                         </motion.div>
                       </div>

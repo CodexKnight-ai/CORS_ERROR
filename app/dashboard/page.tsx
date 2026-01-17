@@ -197,14 +197,14 @@ export default function DashboardPage() {
                     transition={{ duration: 0.3, delay: dashboard.roadmaps.length * 0.1, ease: "easeInOut" }}
                     whileHover={{ scale: 1.02, y: -4 }}
                     onClick={() => router.push("/results")}
-                    className="cursor-pointer border-2 border-dashed border-white/20 rounded-xl overflow-hidden bg-gradient-to-br from-white/5 to-white/[0.02] hover:border-green-500/30 hover:shadow-[0_0_20px_rgba(34,197,94,0.15)] transition-all backdrop-blur-sm flex items-center justify-center min-h-[300px]"
+                    className="cursor-pointer border-2 border-dashed border-white/10 rounded-3xl overflow-hidden bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/20 transition-all backdrop-blur-sm flex items-center justify-center min-h-[300px] group"
                   >
                     <div className="text-center p-6">
-                      <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Plus className="w-8 h-8 text-green-400" />
+                      <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 border border-white/5">
+                        <Plus className="w-8 h-8 text-zinc-400 group-hover:text-white transition-colors" />
                       </div>
-                      <h3 className="text-lg font-semibold mb-2">Add New Roadmap</h3>
-                      <p className="text-sm text-gray-400">
+                      <h3 className="text-xl font-bold mb-2 text-zinc-300 group-hover:text-white transition-colors">Add New Roadmap</h3>
+                      <p className="text-sm text-zinc-500 group-hover:text-zinc-400 transition-colors">
                         Explore more career paths
                       </p>
                     </div>
