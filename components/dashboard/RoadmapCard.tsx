@@ -22,7 +22,7 @@ export default function RoadmapCard({ roadmap, onRemove }: RoadmapCardProps) {
   const handleRemove = async (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsRemoving(true);
-    await onRemove(roadmap.careerId);
+    onRemove(roadmap.careerId);
   };
 
   const formatDate = (date: Date | string) => {

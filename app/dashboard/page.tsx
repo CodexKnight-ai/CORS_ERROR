@@ -147,11 +147,11 @@ export default function DashboardPage() {
               You haven't added any roadmaps yet. Discover your perfect career path and start learning today!
             </p>
             <motion.button
-              onClick={() => router.push("/interest-detector")}
+              onClick={() => router.push("/onboarding")}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               transition={{ ease: "easeInOut" }}
-              className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-white to-gray-100 text-black rounded-lg font-semibold hover:shadow-xl hover:shadow-black/20 transition-all"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-white to-gray-100 text-black rounded-lg font-semibold hover:shadow-xl hover:shadow-black/20 transition-all cursor-pointer"
             >
               <Sparkles className="w-5 h-5" />
               Discover Careers
