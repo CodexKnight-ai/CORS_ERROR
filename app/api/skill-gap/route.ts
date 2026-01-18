@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { careerId, careerName, recognizedSkills, missingSkills, gapAnalysis } = await request.json();
+    const { careerId, careerName, recognizedSkills, missingSkills, gapAnalysis, similarity } = await request.json();
 
     if (!careerId || !careerName) {
       return NextResponse.json(
@@ -105,6 +105,7 @@ export async function POST(request: NextRequest) {
           intermediate_gaps: [],
           advanced_gaps: [],
         },
+        similarity: similarity || 0,
         skillsAcquired: [], // Reset on new analysis
       },
       { upsert: true, new: true }

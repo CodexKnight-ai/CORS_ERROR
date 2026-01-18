@@ -15,6 +15,7 @@ export interface IUserSkillGap extends Document {
   gapAnalysis: IGapAnalysis;
   skillsAcquired: string[]; // Skills learned through module completion
   progressPercentage: number; // Calculated field
+  similarity: number; // Semantic similarity from onboarding
   createdAt: Date;
   updatedAt: Date;
 }
@@ -34,7 +35,8 @@ const UserSkillGapSchema = new Schema<IUserSkillGap>(
     missingSkills: { type: [String], default: [] },
     gapAnalysis: { type: GapAnalysisSchema, default: () => ({}) },
     skillsAcquired: { type: [String], default: [] },
-    progressPercentage: { type: Number, default: 0, min: 0, max: 100 }
+    progressPercentage: { type: Number, default: 0, min: 0, max: 100 },
+    similarity: { type: Number, default: 0 }
   },
   {
     timestamps: true,
@@ -45,11 +47,11 @@ const UserSkillGapSchema = new Schema<IUserSkillGap>(
 UserSkillGapSchema.index({ userId: 1, careerId: 1 }, { unique: true });
 
 // Virtual to calculate progress percentage
-UserSkillGapSchema.pre('save', function(next: (err?: Error) => void) {
-  const self = this as unknown as IUserSkillGap;
+UserSkillGapSchema.pre('save', function (this: any, next: any) {
+  const self = this;
   if (self.missingSkills.length > 0) {
-    const acquired = self.skillsAcquired.filter(skill => 
-      self.missingSkills.some(missing => 
+    const acquired = self.skillsAcquired.filter((skill: string) =>
+      self.missingSkills.some((missing: string) =>
         missing.toLowerCase() === skill.toLowerCase()
       )
     );

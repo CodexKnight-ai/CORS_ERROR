@@ -14,82 +14,101 @@ export async function POST(req: Request) {
         const body = await req.json();
         const extractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', { dtype: 'q8' });
 
-        // 1. Prepare User Evidence
-        const userEvidence = [
-            ...body.skills.map((s: string) => ({ text: s, type: 'explicit' })),
-            ...body.projects.map((p: any) => ({ text: `${p.name}: ${p.description}`, type: 'project' })),
-            ...body.education.map((e: any) => ({ text: `${e.degree} at ${e.institution}`, type: 'academic' })),
-            ...body.achievements.map((a: any) => ({ text: `${a.title}: ${a.description}`, type: 'achievement' }))
+        // 1. ADVANCED CHUNKING: Creating "Micro-Contexts"
+        // This ensures skills mentioned in passing within a 500-word description are caught.
+        const userKnowledgeBase = [
+            ...body.skills.map((s: string) => ({ text: s.toLowerCase() })),
+            ...body.education.flatMap((e: any) => [
+                { text: e.degree.toLowerCase() },
+                { text: e.institution.toLowerCase() }
+            ]),
+            ...body.projects.flatMap((p: any) => [
+                { text: p.name.toLowerCase() },
+                { text: p.description.toLowerCase() },
+                // Split description into sentences to boost focus on specific tool mentions
+                ...p.description.split(/[.!?]/).filter((s: string) => s.length > 5).map((s: string) => ({ text: s.trim().toLowerCase() }))
+            ]),
+            ...body.achievements.map((a: any) => ({ text: `${a.title} ${a.description}`.toLowerCase() }))
         ];
 
-        const evidenceEmbeddings = await Promise.all(
-            userEvidence.map(async (item) => {
-                const out = await extractor(item.text, { pooling: 'mean', normalize: true });
-                return { ...item, embedding: Array.from(out.data) as number[] };
+        // Pre-calculate embeddings for micro-chunks
+        const chunkEmbeddings = await Promise.all(
+            userKnowledgeBase.map(async (chunk) => {
+                const out = await extractor(chunk.text, { pooling: 'mean', normalize: true });
+                return { ...chunk, embedding: Array.from(out.data) as number[] };
             })
         );
 
-        // 2. Global Search
-        const globalText = userEvidence.map(e => e.text).join(' ');
-        const globalOut = await extractor(globalText, { pooling: 'mean', normalize: true });
+        // 2. Profile-to-Job Matching
+        const globalProfileText = body.skills.join(' ') + ' ' + body.projects.map((p: any) => p.description).join(' ');
+        const globalOut = await extractor(globalProfileText, { pooling: 'mean', normalize: true });
         const globalEmbedding = Array.from(globalOut.data) as number[];
 
         let { data: matches, error } = await supabase.rpc('match_jobs', {
             query_embedding: globalEmbedding,
-            match_threshold: 0.1,
-            match_count: 5
+            match_threshold: 0.01, // Very broad initial search
+            match_count: 15
         });
 
         if (error) throw error;
 
-        // 3. Process each match with BERT
+        // 3. HYPER-SENSITIVE SKILL RECOGNITION
         const finalResults = await Promise.all(matches.map(async (job: any) => {
-            const categories = {
-                foundational: job.skills_breakdown?.foundational || [],
-                intermediate: job.skills_breakdown?.intermediate || [],
-                advanced: job.skills_breakdown?.advanced || [],
-                tools: job.tools_required || []
-            };
+            const allReqs = [...new Set([
+                ...(job.skills_breakdown?.foundational || []),
+                ...(job.skills_breakdown?.intermediate || []),
+                ...(job.skills_breakdown?.advanced || []),
+                ...(job.tools_required || []),
+                ...(job.required_skills || [])
+            ])];
 
             const recognized: string[] = [];
             const missing: string[] = [];
 
-            // Analyze every required skill
-            for (const section of Object.values(categories)) {
-                for (const reqSkill of section) {
-                    const reqOut = await extractor(reqSkill, { pooling: 'mean', normalize: true });
-                    const reqVec = Array.from(reqOut.data) as number[];
+            for (const reqSkill of allReqs) {
+                const reqLower = reqSkill.toLowerCase();
+                const reqOut = await extractor(reqSkill, { pooling: 'mean', normalize: true });
+                const reqVec = Array.from(reqOut.data) as number[];
 
-                    let isFound = false;
-                    for (const evidence of evidenceEmbeddings) {
-                        const score = cosineSimilarity(reqVec, evidence.embedding);
-                        if (score > 0.72) { // Semantic Match Threshold
-                            isFound = true;
-                            break;
-                        }
+                let isFound = false;
+
+                for (const chunk of chunkEmbeddings) {
+                    // TIER 1: Direct or Substring Match (e.g., "React" found in "React.js Developer")
+                    if (chunk.text.includes(reqLower) || reqLower.includes(chunk.text)) {
+                        isFound = true;
+                        break;
                     }
 
-                    if (isFound) recognized.push(reqSkill);
-                    else missing.push(reqSkill);
+                    // TIER 2: Aggressive Semantic Match
+                    // Lowered to 0.60 to capture related concepts (e.g., "Git" matching "Version Control")
+                    const score = cosineSimilarity(reqVec, chunk.embedding);
+                    if (score > 0.60) {
+                        isFound = true;
+                        break;
+                    }
                 }
+
+                if (isFound) recognized.push(reqSkill);
+                else missing.push(reqSkill);
             }
 
             return {
                 ...job,
-                match_percentage: Math.round(job.similarity * 100),
-                // --- THE NEW FIELDS ---
-                missing_skills: [...new Set(missing)], // Flat array for easy listing
-                recognized_skills: [...new Set(recognized)],
-                // Detailed breakdown for the "Gap Analysis" UI
+                // Recalculate match percentage based on the actual skill discovery
+                match_percentage: Math.round((recognized.length / (recognized.length + missing.length)) * 100),
+                recognized_skills: recognized,
+                missing_skills: missing,
                 gap_analysis: {
-                    foundational_gaps: categories.foundational.filter((s: string) => missing.includes(s)),
-                    intermediate_gaps: categories.intermediate.filter((s: string) => missing.includes(s)),
-                    advanced_gaps: categories.advanced.filter((s: string) => missing.includes(s))
+                    foundational_gaps: (job.skills_breakdown?.foundational || []).filter((s: string) => missing.includes(s)),
+                    intermediate_gaps: (job.skills_breakdown?.intermediate || []).filter((s: string) => missing.includes(s)),
+                    advanced_gaps: (job.skills_breakdown?.advanced || []).filter((s: string) => missing.includes(s))
                 }
             };
         }));
 
-        return NextResponse.json(finalResults);
+        return NextResponse.json(
+            finalResults.sort((a, b) => b.match_percentage - a.match_percentage).slice(0, 7)
+        );
 
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 });

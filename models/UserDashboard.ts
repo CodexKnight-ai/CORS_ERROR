@@ -36,6 +36,7 @@ export interface IDashboardRoadmap {
     intermediate_gaps: string[];
     advanced_gaps: string[];
   };
+  similarity?: number;
 }
 
 export interface IUserDashboard extends Document {
@@ -61,8 +62,8 @@ const ModuleSchema = new Schema({
   description: { type: String },
   duration: { type: String },
   subModules: [SubModuleSchema],
-  status: { 
-    type: String, 
+  status: {
+    type: String,
     enum: ['pending', 'in-progress', 'completed'],
     default: 'pending'
   },
@@ -87,7 +88,8 @@ const DashboardRoadmapSchema = new Schema({
   recognizedSkills: { type: [String], default: [] },
   missingSkills: { type: [String], default: [] },
   skillsAcquired: { type: [String], default: [] },
-  gapAnalysis: { type: GapAnalysisSchema, default: null }
+  gapAnalysis: { type: GapAnalysisSchema, default: null },
+  similarity: { type: Number }
 });
 
 const UserDashboardSchema = new Schema<IUserDashboard>(

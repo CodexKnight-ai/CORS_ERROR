@@ -1,35 +1,52 @@
 import { NextRequest, NextResponse } from "next/server";
+import { supabase } from '@/app/lib/supabase';
+import { pipeline, env } from '@huggingface/transformers';
+import path from 'path';
 import type { RoadmapGenerationRequest, Roadmap, Module } from "@/lib/types/roadmap";
-import videosData from "@/lib/data/videos.json";
 
 const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY;
 const MISTRAL_MODEL = process.env.MISTRAL_MODEL || "open-mistral-7b";
 
+env.cacheDir = path.join(process.cwd(), '.cache');
+
+// Singleton for BERT model to avoid re-loading on every request
+let extractorInstance: any = null;
+
+async function getExtractor() {
+  if (!extractorInstance) {
+    extractorInstance = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
+      dtype: 'q8',
+    });
+  }
+  return extractorInstance;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { careerId, careerData, missingSkills, recognizedSkills, gapAnalysis }: RoadmapGenerationRequest = await request.json();
+    console.log("Generating roadmap...");
+    const body: RoadmapGenerationRequest = await request.json();
 
-    if (!careerId || !careerData) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
-    }
+    // Destructuring with fallbacks to fix: 
+    // "Argument of type 'string[] | undefined' is not assignable to parameter of type 'string[]'"
+    const {
+      careerId,
+      careerData,
+      missingSkills = [],
+      recognizedSkills = [],
+      gapAnalysis
+    } = body;
 
-    if (!MISTRAL_API_KEY) {
-      return NextResponse.json(
-        { error: "API key not configured" },
-        { status: 500 }
-      );
+    if (!careerId || !careerData || !MISTRAL_API_KEY) {
+      return NextResponse.json({ error: "Missing configuration or data" }, { status: 400 });
     }
 
     const startTime = Date.now();
 
-    // Construct the prompt for Mistral AI
+    const extractor = await getExtractor();
+
     const prompt = buildRoadmapPrompt(careerData, missingSkills, recognizedSkills, gapAnalysis);
 
-    // Call Mistral AI API
-    const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
+    const aiResponse = await fetch("https://api.mistral.ai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -38,241 +55,121 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         model: MISTRAL_MODEL,
         messages: [
-          {
-            role: "system",
-            content: "You are an expert career learning path designer. Create structured, comprehensive learning roadmaps with modules and sub-modules. Return ONLY valid JSON."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
+          { role: "system", content: "You are an expert career learning path designer. Create structured JSON roadmaps." },
+          { role: "user", content: prompt }
         ],
-        temperature: 0.7,
-        max_tokens: 2500,
+        temperature: 0.3,
       }),
     });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Mistral API error:", errorData);
-      return NextResponse.json(
-        { error: "Failed to generate roadmap from AI" },
-        { status: 500 }
-      );
+    if (!aiResponse.ok) {
+      const errorText = await aiResponse.text();
+      console.error("Mistral API Error:", errorText);
+      throw new Error(`Mistral API failed: ${aiResponse.status}`);
     }
 
-    const data = await response.json();
-    const aiResponse = data.choices[0]?.message?.content;
+    const aiData = await aiResponse.json();
+    const rawContent = aiData.choices[0]?.message?.content;
+    console.log("AI Raw Content received");
 
-    if (!aiResponse) {
-      return NextResponse.json(
-        { error: "No response from AI" },
-        { status: 500 }
-      );
+    const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+
+    if (!jsonMatch) {
+      console.error("AI Response did not contain JSON:", rawContent);
+      throw new Error("AI failed to return valid JSON");
+    }
+    const parsedAI = JSON.parse(jsonMatch[0]);
+
+    const modules = parsedAI.modules || [];
+    if (modules.length === 0) {
+      console.warn("AI returned zero modules");
     }
 
-    // Parse AI response to extract roadmap
-    const roadmap = parseAIRoadmap(aiResponse, careerId, careerData.field_name, missingSkills || [], recognizedSkills || []);
+    const modulesWithCourses = await Promise.all(modules.map(async (module: any) => {
+      const moduleTitle = module.title || "Topic";
+      const moduleRelatedSkills = Array.isArray(module.relatedSkills) ? module.relatedSkills : [];
+      const searchQuery = `${moduleTitle} ${moduleRelatedSkills.join(" ")}`.toLowerCase();
+      const out = await extractor(searchQuery, { pooling: 'mean', normalize: true });
+      const queryEmbedding = Array.from(out.data);
 
-    const generationTime = Date.now() - startTime;
+      const { data: matchedCourses, error: matchError } = await supabase.rpc('match_coursera_courses', {
+        query_embedding: queryEmbedding,
+        match_threshold: 0.35,
+        match_count: 2
+      });
+
+      if (matchError) console.error("Search error:", matchError);
+
+      return {
+        ...module,
+        id: module.id || `mod-${Math.random().toString(36).substr(2, 9)}`,
+        status: 'pending' as const,
+        progress: 0,
+        suggestedCourses: matchedCourses || [],
+        subModules: (module.subModules || []).map((sub: any) => ({
+          ...sub,
+          completed: false,
+        })),
+      };
+    }));
+
+    // Fix: "Property 'videos' is missing but required in type 'Roadmap'"
+    // We satisfy the type by providing an empty object while we transition to suggestedCourses
+    const finalRoadmap: Roadmap = {
+      careerId,
+      careerName: careerData.field_name,
+      modules: modulesWithCourses,
+      overallProgress: 0,
+      estimatedDuration: parsedAI.estimatedDuration || "3-4 months",
+      recognizedSkills,
+      missingSkills,
+      videos: {}, // Satisfies the interface contract
+    };
 
     return NextResponse.json({
-      roadmap,
-      generationTime,
+      roadmap: finalRoadmap,
+      generationTime: Date.now() - startTime,
     });
-  } catch (error) {
+
+  } catch (error: any) {
     console.error("Error in generate-roadmap API:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-function buildRoadmapPrompt(careerData: any, missingSkills: string[] = [], recognizedSkills: string[] = [], gapAnalysis?: any): string {
-  const missingContext = missingSkills.length > 0 
-    ? `The user lacks these specific skills: ${missingSkills.join(", ")}.`
-    : "The user is starting fresh.";
-    
-  const recognizedContext = recognizedSkills.length > 0
-    ? `The user already knows: ${recognizedSkills.join(", ")}.`
-    : "No prior relevant skills.";
-
+// Ensure parameters have default empty arrays to fix type errors
+function buildRoadmapPrompt(
+  careerData: any,
+  missingSkills: string[] = [],
+  recognizedSkills: string[] = [],
+  gapAnalysis?: any
+): string {
   return `
-**Role**: You are an expert AI Career Coach & Curriculum Designer.
-**Goal**: Create a hyper-personalized learning roadmap for the role of "${careerData.field_name}" that specifically targets the user's skill gaps.
-**Context**: 
-- **Role Description**: ${careerData.field_description}
-- **Required Skills**: ${careerData.skills_required.join(", ")}
-- **User's Current State**: ${recognizedContext}
-- **Gap Analysis**: ${missingContext}
-  ${gapAnalysis ? `(Foundational: ${gapAnalysis.foundational_gaps?.join(", ")}, Intermediate: ${gapAnalysis.intermediate_gaps?.join(", ")})` : ""}
-- **Target Audience**: A motivated learner seeking a ${careerData.difficulty_rating}/10 difficulty path (entry time: ${careerData.entry_level_duration}).
+**Role**: AI Career Curriculum Designer.
+**Goal**: Design a personalized learning roadmap for "${careerData.field_name}" to bridge the gaps.
+**Context**:
+- Required Skills: ${careerData.skills_required?.join(", ") ?? "Not specified"}
+- User Already Knows: ${recognizedSkills.join(", ")}
+- Missing Skills (Target): ${missingSkills.join(", ")}
+${gapAnalysis ? `- Gap Priority: Foundational (${gapAnalysis.foundational_gaps?.join(", ")})` : ""}
 
 **Instructions**:
-1. Design 5-7 learning modules.
-2. **CRITICAL**: Each module must explicitly address one or more of the "Missing Skills". 
-3. Include a "relatedSkills" array in each module listing exactly which missing skills are covered by that module.
-4. If a module covers a foundational gap, place it earlier.
-
-**Output Format**:
-Return ONLY a valid JSON object matching this structure:
+1. Create 5-7 logical modules.
+2. For each module, provide a "relatedSkills" array from the "Missing Skills" list.
+3. Return ONLY valid JSON in this format:
 {
   "modules": [
     {
       "id": "module-1",
-      "title": "Module 1: [Topic]",
-      "description": "Brief description",
-      "duration": "2-3 weeks",
-      "relatedSkills": ["Skill A", "Skill B"], // MUST map to the missing skills list
+      "title": "Topic Title",
+      "description": "Short description",
+      "duration": "Duration info",
+      "relatedSkills": ["Skill Name"],
       "subModules": [
-        {
-          "id": "sub-1-1",
-          "title": "Subtopic Title",
-          "topics": ["Detail 1", "Detail 2"],
-          "duration": "3 days",
-          "resources": ["Course link", "Docs"]
-        }
+        { "title": "Subtopic", "topics": ["A", "B"], "duration": "Days", "resources": ["Docs"] }
       ]
     }
   ],
-  "estimatedDuration": "3-4 months"
+  "estimatedDuration": "X months"
 }
 `;
 }
-
-function parseAIRoadmap(aiResponse: string, careerId: number, careerName: string, missingSkills: string[], recognizedSkills: string[]): Roadmap {
-  try {
-    // Extract JSON from the response
-    const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("No JSON found in response");
-    }
-
-    const parsed = JSON.parse(jsonMatch[0]);
-    
-    // Transform to our Roadmap format
-    const modules: Module[] = parsed.modules.map((module: any) => ({
-      ...module,
-      status: 'pending' as const,
-      progress: 0,
-      relatedSkills: module.relatedSkills || [],
-      subModules: module.subModules.map((sub: any) => ({
-        ...sub,
-        completed: false,
-      })),
-    }));
-
-    // Load curated videos
-    const videos = loadCuratedVideos(careerName, modules);
-
-    return {
-      careerId,
-      careerName,
-      modules,
-      overallProgress: 0,
-      estimatedDuration: parsed.estimatedDuration || "3-6 months",
-      videos,
-      recognizedSkills,
-      missingSkills
-    };
-  } catch (error) {
-    console.error("Error parsing AI roadmap:", error);
-    // Fallback: return a basic roadmap structure
-    return createFallbackRoadmap(careerId, careerName, missingSkills, recognizedSkills);
-  }
-}
-
-function loadCuratedVideos(careerName: string, modules: Module[]): Record<string, any[]> {
-  try {
-    // Import videos data
-    // const videosData = require("@/lib/data/videos.json"); // Replaced with top-level import
-    
-    // Normalize career name to match video database keys
-    const careerKey = careerName.toLowerCase().replace(/\s+/g, '-');
-    
-    // Get videos for this career or use default
-    const careerVideos = videosData[careerKey] || videosData.default;
-    
-    // Map videos to modules
-    const videoMap: Record<string, any[]> = {};
-    modules.forEach((module) => {
-      const moduleVideos = careerVideos[module.id] || careerVideos["module-1"] || [];
-      videoMap[module.id] = moduleVideos;
-    });
-    
-    return videoMap;
-  } catch (error) {
-    console.error("Error loading curated videos:", error);
-    return {};
-  }
-}
-
-function createFallbackRoadmap(careerId: number, careerName: string, missingSkills: string[] = [], recognizedSkills: string[] = []): Roadmap {
-  return {
-    careerId,
-    careerName,
-    estimatedDuration: "3-6 months",
-    overallProgress: 0,
-    videos: {},
-    recognizedSkills,
-    missingSkills,
-    modules: [
-      {
-        id: "module-1",
-        title: "Module 1: Foundations",
-        description: "Build foundational knowledge and understanding",
-        duration: "2-3 weeks",
-        status: "pending",
-        progress: 0,
-        relatedSkills: missingSkills.slice(0, 2), // Mock link to missing skills
-        subModules: [
-          {
-            id: "sub-1-1",
-            title: "Introduction to the Field",
-            topics: ["Overview", "Key concepts", "Industry landscape"],
-            duration: "3-4 days",
-            resources: ["Online courses", "Documentation"],
-            completed: false,
-          },
-          {
-            id: "sub-1-2",
-            title: "Core Terminology",
-            topics: ["Essential terms", "Standards", "Best practices"],
-            duration: "2-3 days",
-            resources: ["Glossaries", "Study guides"],
-            completed: false,
-          },
-        ],
-      },
-      {
-        id: "module-2",
-        title: "Module 2: Core Skills",
-        description: "Develop essential technical and practical skills",
-        duration: "4-6 weeks",
-        status: "pending",
-        progress: 0,
-        relatedSkills: missingSkills.slice(2, 4),
-        subModules: [
-          {
-            id: "sub-2-1",
-            title: "Technical Fundamentals",
-            topics: ["Tools", "Technologies", "Workflows"],
-            duration: "1-2 weeks",
-            resources: ["Tutorials", "Hands-on labs"],
-            completed: false,
-          },
-          {
-            id: "sub-2-2",
-            title: "Practical Applications",
-            topics: ["Real-world scenarios", "Case studies", "Projects"],
-            duration: "2-3 weeks",
-            resources: ["Project templates", "Examples"],
-            completed: false,
-          },
-        ],
-      },
-    ],
-  };
-}
-

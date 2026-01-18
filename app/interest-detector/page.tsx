@@ -135,7 +135,7 @@ export default function InterestDetector() {
   const handleSelectOption = (option: string) => {
     setAnswers((prev) => {
       const currentAnswers = prev[currentQuestionIndex] || [];
-      
+
       // If single-select question, replace the answer
       if (isSingleSelect) {
         return {
@@ -143,7 +143,7 @@ export default function InterestDetector() {
           [currentQuestionIndex]: [option],
         };
       }
-      
+
       // Multi-select: toggle the option
       if (currentAnswers.includes(option)) {
         return {
@@ -167,12 +167,20 @@ export default function InterestDetector() {
       // Call API to get career recommendations
       setIsLoading(true);
       try {
+        // Retrieve suggested roles from sessionStorage (saved during onboarding)
+        const suggestedRolesStr = sessionStorage.getItem("suggestedJobRoles");
+        const suggestedRoles = suggestedRolesStr ? JSON.parse(suggestedRolesStr) : null;
+        console.log(suggestedRoles);
+
         const response = await fetch("/api/recommend-careers", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ answers }),
+          body: JSON.stringify({
+            answers,
+            suggestedRoles 
+          }),
         });
 
         if (!response.ok) {
@@ -180,7 +188,9 @@ export default function InterestDetector() {
         }
 
         const data = await response.json();
-        
+        console.log(data);
+
+
         // Store recommendations in sessionStorage and navigate to results
         sessionStorage.setItem("careerRecommendations", JSON.stringify(data));
         window.location.href = "/results";
@@ -273,7 +283,7 @@ export default function InterestDetector() {
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 leading-tight">
                 {currentQuestion.question}
               </h2>
-              
+
               {/* Selection hint */}
               <p className="text-sm text-gray-500 mb-10">
                 {isSingleSelect ? "Select one option" : "Select all that apply"}
@@ -290,11 +300,10 @@ export default function InterestDetector() {
                       whileHover={{ scale: 1.005 }}
                       whileTap={{ scale: 0.995 }}
                       onClick={() => handleSelectOption(option.text)}
-                      className={`w-full text-left p-5 rounded-lg border transition-all duration-200 flex items-center justify-between group ${
-                        isSelected
+                      className={`w-full text-left p-5 rounded-lg border transition-all duration-200 flex items-center justify-between group ${isSelected
                           ? "border-white bg-white/5"
                           : "border-white/10 hover:border-white/30 hover:bg-white/5"
-                      }`}
+                        }`}
                     >
                       <span className="font-medium text-base sm:text-lg">
                         {option.text}
@@ -328,11 +337,10 @@ export default function InterestDetector() {
             <button
               onClick={handleBack}
               disabled={currentQuestionIndex === 0}
-              className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
-                currentQuestionIndex === 0
+              className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${currentQuestionIndex === 0
                   ? "text-gray-600 cursor-not-allowed"
                   : "text-gray-400 hover:text-white hover:bg-white/5"
-              }`}
+                }`}
             >
               <ArrowLeft className="w-4 h-4" />
               Back

@@ -68,7 +68,7 @@ export default function RoadmapCard({ roadmap, onRemove }: RoadmapCardProps) {
             transition={{ delay: 0.1, ease: "easeInOut" }}
             className="px-4 py-1.5 bg-green-500/10 border border-green-500/20 rounded-full text-green-300 text-xs font-bold uppercase tracking-wide backdrop-blur-md"
           >
-            {roadmap.matchScore}% Match
+            {((roadmap.similarity ?? (roadmap.matchScore / 100)) * 100).toFixed(2)}% Match
           </motion.div>
           <div className="text-3xl font-bold text-white drop-shadow-lg">
             {roadmap.progress}%
