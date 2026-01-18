@@ -1,6 +1,25 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/app/lib/supabase';
-import { pipeline } from '@huggingface/transformers';
+import { pipeline, env } from '@huggingface/transformers';
+
+import path from 'path';
+
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60; // Increase timeout for model loading
+
+env.cacheDir = path.join(process.cwd(), '.cache');
+
+// Singleton for extractor to avoid re-loading on every request
+let extractorInstance: any = null;
+
+async function getExtractor() {
+    if (!extractorInstance) {
+        extractorInstance = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
+            dtype: 'q8',
+        });
+    }
+    return extractorInstance;
+}
 
 function cosineSimilarity(vecA: number[], vecB: number[]) {
     const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
@@ -9,10 +28,14 @@ function cosineSimilarity(vecA: number[], vecB: number[]) {
     return (magA === 0 || magB === 0) ? 0 : dotProduct / (magA * magB);
 }
 
-export async function POST(req: Request) {
+export const GET = async () => {
+    return NextResponse.json({ status: "Suggest Roles API is active" });
+};
+
+export const POST = async (req: NextRequest) => {
     try {
         const body = await req.json();
-        const extractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', { dtype: 'q8' });
+        const extractor = await getExtractor();
 
         // 1. ADVANCED CHUNKING: Creating "Micro-Contexts"
         // This ensures skills mentioned in passing within a 500-word description are caught.
