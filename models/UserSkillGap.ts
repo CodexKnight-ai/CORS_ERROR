@@ -28,8 +28,8 @@ const GapAnalysisSchema = new Schema({
 
 const UserSkillGapSchema = new Schema<IUserSkillGap>(
   {
-    userId: { type: String, required: true, index: true },
-    careerId: { type: Number, required: true, index: true },
+    userId: { type: String, required: true },
+    careerId: { type: Number, required: true },
     careerName: { type: String, required: true },
     recognizedSkills: { type: [String], default: [] },
     missingSkills: { type: [String], default: [] },
