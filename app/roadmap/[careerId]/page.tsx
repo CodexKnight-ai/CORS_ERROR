@@ -88,11 +88,14 @@ export default function RoadmapPage() {
   const params = useParams();
   const router = useRouter();
   const careerId = parseInt(params.careerId as string);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
   const [loading, setLoading] = useState(true);
-  const [expandedModule, setExpandedModule] = useState<string | null>(null);
+  const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [completedSubModules, setCompletedSubModules] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<"map" | "list">("map");
+  const [dimensions, setDimensions] = useState({ width: 1200, height: 800 });
 
   const acquiredSkills = useMemo(() => {
     if (!roadmap) return new Set<string>();
@@ -116,7 +119,7 @@ export default function RoadmapPage() {
 
   useEffect(() => { loadRoadmap(); }, [careerId]);
 
-  const loadRoadmap = async () => {
+  const loadRoadmapData = async () => {
     try {
       let career: Career | undefined;
       const storedRecs = sessionStorage.getItem("careerRecommendations");
