@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Brain, TrendingUp, Target, BarChart3, CheckCircle2, Menu, X, Zap, ChevronRight } from 'lucide-react';
+import { ArrowRight, Brain, TrendingUp, Target, BarChart3, CheckCircle2, Menu, X, Zap, ChevronRight, Map, BookOpen, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 
@@ -20,16 +20,16 @@ const LandingPage = () => {
   }, []);
 
   const features = [
-    { icon: <Brain className="w-5 h-5" />, title: 'Clinical Competency', desc: 'AI-driven analysis of your medical knowledge and practical skills' },
-    { icon: <TrendingUp className="w-5 h-5" />, title: 'Residency Matching', desc: 'Data-backed guidance for specialization and residency programs' },
-    { icon: <Target className="w-5 h-5" />, title: 'Board Prep', desc: 'Personalized study plans for USMLE, PLAB, and NEET PG' },
-    { icon: <BarChart3 className="w-5 h-5" />, title: 'Clinical Logbook', desc: 'Digital tracking of patient encounters and procedure hours' }
+    { icon: <Map className="w-5 h-5" />, title: 'AI-Driven Roadmaps', desc: 'Personalized learning paths tailored to close your specific skill gaps' },
+    { icon: <BarChart3 className="w-5 h-5" />, title: 'Skill Gap Analysis', desc: 'Visualize missing competencies and track your mastery in real-time' },
+    { icon: <BookOpen className="w-5 h-5" />, title: 'Smart Note-Taking', desc: 'Integrated notes with auto-save to capture insights alongside your curriculum' },
+    { icon: <Sparkles className="w-5 h-5" />, title: 'Curated Resources', desc: 'AI-matched courses and materials with relevance scoring for efficient learning' }
   ];
 
   const sectors = [
-    { title: 'Clinical Medicine', icon: '🩺', desc: 'Pathways for MBChB, MD, and Nursing professionals.' },
-    { title: 'Health Informatics', icon: '📊', desc: 'Bridge the gap between patient care and data science.' },
-    { title: 'Medical Research', icon: '🔬', desc: 'Advance healthcare through clinical trials and biotechnology.' }
+    { title: 'Health Data & AI', icon: '🧬', desc: 'Master machine learning and predictive analytics for healthcare.' },
+    { title: 'Clinical Systems', icon: '🩺', desc: 'Optimize EHR workflows and bridge clinical care with IT.' },
+    { title: 'Digital Health', icon: '💻', desc: 'Build secure telemedicine platforms and future-ready apps.' }
   ];
 
   const benefits = [
@@ -143,9 +143,9 @@ const LandingPage = () => {
 
           <div className="grid grid-cols-3 divide-x divide-white/10 border border-white/10 py-8 bg-black/20 backdrop-blur-xl pointer-events-auto rounded-2xl shadow-2xl">
             {[
-              { val: '50+', label: 'Partner Hospitals' },
-              { val: '98%', label: 'Match Rate' },
-              { val: '20+', label: 'Specialties' }
+              { val: '500+', label: 'Skills Tracked' },
+              { val: '95%', label: 'AI Accuracy' },
+              { val: '50+', label: 'Career Paths' }
             ].map((stat, i) => (
               <div key={i} className="flex flex-col items-center">
                 <span className="text-2xl sm:text-3xl font-bold text-white mb-1 drop-shadow-md">{stat.val}</span>
