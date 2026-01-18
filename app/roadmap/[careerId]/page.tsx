@@ -1,10 +1,6 @@
 "use client";
 
-<<<<<<< HEAD
-import { useEffect, useState, useMemo ,useRef} from "react";
-=======
 import { useEffect, useState, useMemo, useRef } from "react";
->>>>>>> origin/main
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -122,13 +118,9 @@ export default function RoadmapPage() {
     return Math.round((learnedCount / roadmap.missingSkills.length) * 100);
   }, [roadmap, acquiredSkills]);
 
-<<<<<<< HEAD
-  const loadRoadmapData = async () => {
-=======
   useEffect(() => { loadRoadmap(); }, [careerId]);
 
   const loadRoadmap = async () => {
->>>>>>> origin/main
     try {
       let career: Career | undefined;
       const storedRecs = sessionStorage.getItem("careerRecommendations");
@@ -188,7 +180,7 @@ export default function RoadmapPage() {
       setLoading(false);
     }
   };
-  useEffect(() => { loadRoadmapData(); }, [careerId]);
+  useEffect(() => { loadRoadmap(); }, [careerId]);
 
   
 
