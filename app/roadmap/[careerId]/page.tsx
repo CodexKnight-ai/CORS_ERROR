@@ -189,10 +189,26 @@ export default function RoadmapPage() {
   };
   useEffect(() => { loadRoadmap(); }, [careerId]);
 
-  
+  const updateProgressInDB = async (moduleId: string, newProgress: number) => {
+    try {
+      await fetch("/api/update-progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          moduleId: moduleId,
+          moduleProgress: newProgress,
+          userId,
+          careerId: careerId,
+        }),
+      });
+    } catch (error) {
+    console.error("Failed to update progress in database:", error);
+  }
+};
 
   const toggleSubModule = (moduleId: string, subModuleId: string) => {
     if (!roadmap) return;
+    
     const newCompleted = new Set(completedSubModules);
     newCompleted.has(subModuleId) ? newCompleted.delete(subModuleId) : newCompleted.add(subModuleId);
     setCompletedSubModules(newCompleted);
@@ -218,6 +234,7 @@ export default function RoadmapPage() {
     );
 
     setRoadmap({ ...roadmap, modules: updatedModules, overallProgress });
+    updateProgressInDB(moduleId, moduleProgressRecord[moduleId]);
     saveProgress(careerId, Array.from(newCompleted), moduleProgressRecord, overallProgress);
   };
 
