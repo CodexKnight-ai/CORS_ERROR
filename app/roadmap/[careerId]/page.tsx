@@ -12,6 +12,8 @@ import { saveProgress, loadProgress, calculateModuleProgress, updateModuleStatus
 import VideoRecommendations from "@/components/roadmap/VideoRecommendations";
 import SkillGapAnalysis from "@/components/roadmap/SkillGapAnalysis";
 import CircularProgress from "@/components/roadmap/CircularProgress";
+import NotesSidebar from "../notesidebar";
+import { getId } from "@/lib/helper/getId";
 
 export default function RoadmapPage() {
   const params = useParams();
@@ -22,6 +24,7 @@ export default function RoadmapPage() {
   const [loading, setLoading] = useState(true);
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
   const [completedSubModules, setCompletedSubModules] = useState<Set<string>>(new Set());
+  const [userId, setUserId] = useState<string | null>(null);
 
   // Calculate acquired skills based on completed modules
   const acquiredSkills = useMemo(() => {
@@ -158,7 +161,6 @@ export default function RoadmapPage() {
       if (progress) {
         setCompletedSubModules(new Set(progress.completedSubModules));
 
-
         parsedRoadmap.modules = parsedRoadmap.modules.map((module: Module) => {
           const moduleProgress = progress.moduleProgress[module.id] || module.progress || 0; // Prefer local or existing
           return {
@@ -287,6 +289,13 @@ export default function RoadmapPage() {
     }
   };
 
+  useEffect(() => {
+    (async () => {
+      const decoded = await getId();
+      setUserId(decoded.userId);
+    })();
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white font-poppins flex items-center justify-center">
@@ -316,6 +325,7 @@ export default function RoadmapPage() {
 
   return (
     <div className="min-h-screen bg-black text-white font-poppins">
+      <NotesSidebar userId={userId} careerId={careerId} />
       {/* Floating Skill Progress Indicator */}
       {roadmap.missingSkills && roadmap.missingSkills.length > 0 && (
         <div className="fixed top-6 right-6 z-50 bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-2xl">
