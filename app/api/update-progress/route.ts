@@ -1,6 +1,7 @@
 // app/api/update-progress/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/mongodb";
+import connectToDatabase from "@/lib/db";
+import User from "@/lib/models/User";
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,10 +14,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { db } = await connectToDatabase();
+    await connectToDatabase();
 
     // Calculate overall progress by getting all modules and averaging
-    const user = await db.collection("users").findOne(
+    const user = await User.findOne(
       { _id: userId, "roadmaps.careerId": careerId },
       { projection: { "roadmaps.$": 1 } }
     );
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
     };
 
     // Update the specific module's progress and the overall roadmap progress
-    const result = await db.collection("users").updateOne(
+    const result = await User.updateOne(
       { 
         _id: userId, 
         "roadmaps.careerId": careerId 
