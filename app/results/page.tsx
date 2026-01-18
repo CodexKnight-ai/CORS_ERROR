@@ -20,6 +20,7 @@ export default function Results() {
     const stored = sessionStorage.getItem("careerRecommendations");
     if (stored) {
       const data = JSON.parse(stored);
+      console.log("Loaded recommendations:", data);
       setRecommendations(data.recommendations || []);
       setAnalysisTime(data.analysisTime || 0);
     }
@@ -255,7 +256,7 @@ export default function Results() {
                         >
                           {recommendation.matchScore}% Match
                         </motion.div>
-                        {recommendation.career.remote_friendly && (
+                        {/* {recommendation.career.remote_friendly && (
                           <motion.div 
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
@@ -264,7 +265,7 @@ export default function Results() {
                           >
                             Remote Friendly
                           </motion.div>
-                        )}
+                        )} */}
                       </div>
 
                       {/* Key Stats - Always Visible */}
