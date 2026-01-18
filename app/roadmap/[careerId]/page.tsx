@@ -16,6 +16,8 @@ const careersData = careersDataRaw as Career[];
 import { saveProgress, loadProgress, calculateModuleProgress, updateModuleStatus } from "@/lib/utils/progress";
 import SkillGapAnalysis from "@/components/roadmap/SkillGapAnalysis";
 import CircularProgress from "@/components/roadmap/CircularProgress";
+import NotesSidebar from "../notesidebar";
+import { getId } from "@/lib/helper/getId";
 
 // --- Sub-Component: Enhanced Course Recommendations ---
 function CourseRecommendations({ courses }: { courses: any[] }) {
@@ -95,8 +97,7 @@ export default function RoadmapPage() {
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
   const [completedSubModules, setCompletedSubModules] = useState<Set<string>>(new Set());
-  const [viewMode, setViewMode] = useState<"map" | "list">("map");
-  const [dimensions, setDimensions] = useState({ width: 1200, height: 800 });
+  const [userId, setUserId] = useState<string | null>(null);
 
   const acquiredSkills = useMemo(() => {
     if (!roadmap) return new Set<string>();
@@ -218,12 +219,20 @@ export default function RoadmapPage() {
     </div>
   );
 
-  return (
-    <div className="min-h-screen bg-[#050505] text-white pb-32">
-      {/* Background Decor */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-900/10 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-900/10 blur-[120px] rounded-full" />
+  useEffect(() => {
+    (async () => {
+      const decoded = await getId();
+      setUserId(decoded.userId);
+    })();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white font-poppins flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-400">Generating your personalized roadmap...</p>
+        </div>
       </div>
 
       {/* Responsive Floating Progress */}
@@ -241,10 +250,34 @@ export default function RoadmapPage() {
         </motion.div>
       </div>
 
-      {/* Header Section */}
-      <header className="relative z-10 max-w-7xl mx-auto px-6 pt-10">
-        <button onClick={() => router.back()} className="group flex items-center gap-2 text-gray-500 hover:text-white mb-8 transition-all">
-          <div className="p-2 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors">
+  return (
+    <div className="min-h-screen bg-black text-white font-poppins">
+      <NotesSidebar userId={userId} careerId={careerId} />
+      {/* Floating Skill Progress Indicator */}
+      {roadmap.missingSkills && roadmap.missingSkills.length > 0 && (
+        <div className="fixed top-6 right-6 z-50 bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-2xl">
+          <CircularProgress
+            percentage={skillAcquisitionProgress}
+            size={80}
+            strokeWidth={8}
+            label="Skills Acquired"
+            showPercentage={true}
+          />
+          <div className="mt-2 text-center text-xs text-gray-400">
+            {Array.from(acquiredSkills).filter(skill =>
+              roadmap.missingSkills.some(m => m.toLowerCase() === skill.toLowerCase())
+            ).length} of {roadmap.missingSkills.length}
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6">
+          <button
+            onClick={() => router.push("/results")}
+            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4"
+          >
             <ArrowLeft className="w-4 h-4" />
           </div>
           <span className="text-sm font-medium">Exit Roadmap</span>
