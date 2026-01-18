@@ -12,13 +12,13 @@ SkillOrbit is a comprehensive, AI-driven career guidance platform that leverages
 In today's rapidly evolving job market, identifying the right career path is challenging. SkillOrbit addresses this by analyzing user intent beyond simple keywords, providing a data-driven "GPS" for professional growth.
 
 ###  Key Features
-*   ** Intelligent Interest Detector**: A sophisticated 7-factor assessment analyzing cognitive styles, technical depth, work environment, and impact motivation.
-*   ** Semantic Career Matching**: Harnesses BERT embeddings to discover ideal roles based on the "meaning" of your background, not just keyword matches.
-*   ** Dynamic AI Roadmaps**: Generates on-demand learning paths with modular milestones, sub-topics, and estimated durations using Mistral AI.
-*   ** Hyper-Sensitive Skill Gap Analysis**: Uses micro-contextual chunking to identify exactly which skills you possess and which ones are target gaps.
-*   ** Integrated Course Recommendations**: Automatically matches learning modules with specialized Coursera courses using vector search (Supabase pgvector).
-*   ** Immersive 3D Experience**: Cinematic hero section powered by **Spline**, creating a futuristic and engaging user entry point.
-*   ** Interactive Dashboard**: Manage up to 3 active roadmaps simultaneously with real-time progress tracking and persistent state.
+*   **Intelligent Interest Detector**: A sophisticated 7-factor assessment analyzing cognitive styles, technical depth, work environment, and impact motivation.
+*   **Semantic Career Matching**: Harnesses BERT embeddings to discover ideal roles based on the "meaning" of your background, not just keyword matches.
+*   **Dynamic AI Roadmaps**: Generates on-demand learning paths with modular milestones, sub-topics, and estimated durations using Mistral AI.
+*   **Hyper-Sensitive Skill Gap Analysis**: Uses micro-contextual chunking to identify exactly which skills you possess and which ones are target gaps.
+*   **Integrated Course Recommendations**: Automatically matches learning modules with specialized Coursera courses using vector search (Supabase pgvector).
+*   **Immersive 3D Experience**: Cinematic hero section powered by **Spline**, creating a futuristic and engaging user entry point.
+*   **Interactive Dashboard**: Manage up to 3 active roadmaps simultaneously with real-time progress tracking and persistent state.
 
 ---
 # User Form
