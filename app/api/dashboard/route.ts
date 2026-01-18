@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
-import UserDashboard, { IUserDashboard } from "@/models/UserDashboard";
-import User from "@/models/User";
+import UserDashboard, { IUserDashboard } from "@/lib/models/UserDashboard";
+import User from "@/lib/models/User";
 import { verifyToken } from "@/lib/jwt";
 
 // GET - Get user's dashboard roadmaps

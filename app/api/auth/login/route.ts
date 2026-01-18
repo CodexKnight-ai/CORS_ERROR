@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
-import User from "@/models/User";
+import User from "@/lib/models/User";
 import { signToken } from "@/lib/jwt";
 
 export async function POST(req: NextRequest) {

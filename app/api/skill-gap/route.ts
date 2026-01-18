@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
-import UserSkillGap from "@/models/UserSkillGap";
+import UserSkillGap from "@/lib/models/UserSkillGap";
 import { verifyToken } from "@/lib/jwt";
 
 // GET - Retrieve skill gap data for a career
