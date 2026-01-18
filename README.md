@@ -124,4 +124,4 @@ graph TD
 ```
 
 ---
-*Developed for the HiveMind Hackathon - Empowering the next generation of healthcare technologists.*
+*Developed for the Ingenium 2026 Hackathon - Empowering the next generation of healthcare technologists.*
