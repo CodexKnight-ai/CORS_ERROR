@@ -228,13 +228,19 @@ export default function HealthcareOnboardingForm() {
         }),
       });
 
-      const suggestRolesData = await suggestRolesRes.json();
-      console.log("Suggest Roles Response:", suggestRolesData);
-
-      // Save the suggested roles to sessionStorage for use in interest detector
-      sessionStorage.setItem("suggestedJobRoles", JSON.stringify(suggestRolesData));
+      if (!suggestRolesRes.ok) {
+        const errorText = await suggestRolesRes.text();
+        console.error(`Suggest Roles API failed (${suggestRolesRes.status}):`, errorText);
+        // Fallback or just ignore to allow the flow to continue
+        sessionStorage.setItem("suggestedJobRoles", "[]");
+      } else {
+        const suggestRolesData = await suggestRolesRes.json();
+        console.log("Suggest Roles Response:", suggestRolesData);
+        sessionStorage.setItem("suggestedJobRoles", JSON.stringify(suggestRolesData));
+      }
     } catch (error) {
       console.error("Error calling suggest-roles API:", error);
+      sessionStorage.setItem("suggestedJobRoles", "[]");
     }
 
     setTestDialog(true);

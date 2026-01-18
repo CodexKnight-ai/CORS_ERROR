@@ -1,6 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/app/lib/supabase';
 import { pipeline } from '@huggingface/transformers';
+
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60; // Increase timeout for model loading
 
 function cosineSimilarity(vecA: number[], vecB: number[]) {
     const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
@@ -9,7 +12,11 @@ function cosineSimilarity(vecA: number[], vecB: number[]) {
     return (magA === 0 || magB === 0) ? 0 : dotProduct / (magA * magB);
 }
 
-export async function POST(req: Request) {
+export const GET = async () => {
+    return NextResponse.json({ status: "Suggest Roles API is active" });
+};
+
+export const POST = async (req: NextRequest) => {
     try {
         const body = await req.json();
         const extractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', { dtype: 'q8' });
