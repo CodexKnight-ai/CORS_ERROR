@@ -21,6 +21,7 @@ import { getId } from "@/lib/helper/getId";
 
 // --- Sub-Component: Enhanced Course Recommendations ---
 function CourseRecommendations({ courses }: { courses: Course[] }) {
+  console.log(courses);
   if (!courses || courses.length === 0) {
     return (
       <div className="p-8 border-2 border-dashed border-white/5 rounded-3xl text-center bg-white/[0.01]">
