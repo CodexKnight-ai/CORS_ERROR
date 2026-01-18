@@ -131,6 +131,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Sanitize modules to ensure they have IDs (required by Mongoose schema)
+    const sanitizedModules = (modules || []).map((mod: any, modIdx: number) => {
+      const moduleId = mod.id || `mod-${modIdx}-${Math.random().toString(36).substr(2, 5)}`;
+      return {
+        ...mod,
+        id: moduleId,
+        subModules: (mod.subModules || []).map((sub: any, subIdx: number) => ({
+          ...sub,
+          id: sub.id || `${moduleId}-sub-${subIdx}`,
+        }))
+      };
+    });
+
     // Add roadmap
     dashboard.roadmaps.push({
       careerId,
@@ -138,7 +151,7 @@ export async function POST(request: NextRequest) {
       matchScore,
       addedAt: new Date(),
       progress: 0,
-      modules: modules || [], // Store the generated modules
+      modules: sanitizedModules,
       recognizedSkills: recognizedSkills || [],
       missingSkills: missingSkills || [],
       skillsAcquired: [], // Initialize as empty
