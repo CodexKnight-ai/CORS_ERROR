@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo ,useRef} from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -117,8 +117,6 @@ export default function RoadmapPage() {
     return Math.round((learnedCount / roadmap.missingSkills.length) * 100);
   }, [roadmap, acquiredSkills]);
 
-  useEffect(() => { loadRoadmap(); }, [careerId]);
-
   const loadRoadmapData = async () => {
     try {
       let career: Career | undefined;
@@ -179,6 +177,9 @@ export default function RoadmapPage() {
       setLoading(false);
     }
   };
+  useEffect(() => { loadRoadmapData(); }, [careerId]);
+
+  
 
   const toggleSubModule = (moduleId: string, subModuleId: string) => {
     if (!roadmap) return;
