@@ -3,7 +3,7 @@
 import { useState, KeyboardEvent, useRef } from "react";
 import { Code2, GraduationCap, Briefcase, Trophy, Save, Trash2, X, Plus } from "lucide-react";
 import { getId } from "@/lib/helper/getId";
-import TestDialog from "@/components/test-dialog";
+import TestDialog from "@/components/common/SkillAssessmentDialog";
 
 interface Education {
   institution: string;

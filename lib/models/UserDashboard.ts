@@ -113,7 +113,7 @@ const UserDashboardSchema = new Schema<IUserDashboard>(
 );
 
 // Create index for faster queries
-UserDashboardSchema.index({ userId: 1 });
+
 UserDashboardSchema.index({ email: 1 });
 
 const UserDashboard: Model<IUserDashboard> =

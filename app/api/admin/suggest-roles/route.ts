@@ -1,25 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { supabase } from '@/app/lib/supabase';
-import { pipeline, env } from '@huggingface/transformers';
-
-import path from 'path';
-
-export const dynamic = 'force-dynamic';
-export const maxDuration = 60; // Increase timeout for model loading
-
-env.cacheDir = path.join(process.cwd(), '.cache');
-
-// Singleton for extractor to avoid re-loading on every request
-let extractorInstance: any = null;
-
-async function getExtractor() {
-    if (!extractorInstance) {
-        extractorInstance = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
-            dtype: 'q8',
-        });
-    }
-    return extractorInstance;
-}
+import { pipeline } from '@huggingface/transformers';
 
 function cosineSimilarity(vecA: number[], vecB: number[]) {
     const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
@@ -28,14 +9,10 @@ function cosineSimilarity(vecA: number[], vecB: number[]) {
     return (magA === 0 || magB === 0) ? 0 : dotProduct / (magA * magB);
 }
 
-export const GET = async () => {
-    return NextResponse.json({ status: "Suggest Roles API is active" });
-};
-
-export const POST = async (req: NextRequest) => {
+export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const extractor = await getExtractor();
+        const extractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', { dtype: 'q8' });
 
         // 1. ADVANCED CHUNKING: Creating "Micro-Contexts"
         // This ensures skills mentioned in passing within a 500-word description are caught.
@@ -108,6 +85,35 @@ export const POST = async (req: NextRequest) => {
                     if (score > 0.60) {
                         isFound = true;
                         break;
+                    }
+                }
+
+                if (isFound) recognized.push(reqSkill);
+                else missing.push(reqSkill);
+            }
+
+            return {
+                ...job,
+                // Recalculate match percentage based on the actual skill discovery
+                match_percentage: Math.round((recognized.length / (recognized.length + missing.length)) * 100),
+                recognized_skills: recognized,
+                missing_skills: missing,
+                gap_analysis: {
+                    foundational_gaps: (job.skills_breakdown?.foundational || []).filter((s: string) => missing.includes(s)),
+                    intermediate_gaps: (job.skills_breakdown?.intermediate || []).filter((s: string) => missing.includes(s)),
+                    advanced_gaps: (job.skills_breakdown?.advanced || []).filter((s: string) => missing.includes(s))
+                }
+            };
+        }));
+
+        return NextResponse.json(
+            finalResults.sort((a, b) => b.match_percentage - a.match_percentage).slice(0, 7)
+        );
+
+    } catch (err: any) {
+        return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+}                       break;
                     }
                 }
 

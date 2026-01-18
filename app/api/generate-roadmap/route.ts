@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from '@/app/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { pipeline, env } from '@huggingface/transformers';
 import path from 'path';
 import type { RoadmapGenerationRequest, Roadmap, Module } from "@/lib/types/roadmap";

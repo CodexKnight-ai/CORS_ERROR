@@ -41,6 +41,53 @@ SkillOrbit uses a specialized two-tier AI system to balance logical reasoning wi
 
 ---
 
+## 🔬 The Skill Gap Algorithm
+
+The core engine of SkillOrbit is its **Hyper-Sensitive Skill Recognition** algorithm. Unlike traditional platforms that use basic keyword matching, SkillOrbit treats your profile as a set of multidimensional semantic features.
+
+### **1. Micro-Context Chunking**
+To ensure no skill is missed, the algorithm breaks down the user's profile into granular "Micro-Contexts":
+*   **Skills & Education**: Direct mapping of known skills and academic background.
+*   **Project Semantic Extraction**: Project descriptions are split into individual sentences. This ensures a mention of *"leveraged Git for version control"* in a 300-word paragraph is isolated as a specific evidence point.
+
+### **2. Tiered Recognition Engine**
+Each job requirement is analyzed against the user's "Knowledge Base" using a two-tier approach:
+*   **Tier 1: Literal Match**: Fast-path substring comparison for tool names (e.g., "React" matching "React.js").
+*   **Tier 2: Semantic Similarity (BERT)**: 
+    *   The requirement (e.g., *"Cloud Infrastructure"*) and the user's context (e.g., *"Deployed to AWS"*) are vectorized using **all-MiniLM-L6-v2**.
+    *   **Cosine Similarity** is calculated. A score **> 0.60** counts as a recognized skill, even if the terminology differs.
+
+### **3. Priority Gap Analysis**
+Unmatched skills are categorized into a hierarchical gap report:
+*   **Foundational Gaps**: Missing core skills required to start the career.
+*   **Intermediate/Advanced Gaps**: Skills needed for professional growth.
+*   **Result**: This data is passed to **Mistral AI** to ensure the generated Roadmap prioritizes foundational gaps first.
+
+---
+
+## 🎓 Semantic Course Recommendation Engine
+
+SkillOrbit doesn't just tell you what's missing; it provides the bridge to acquire those skills through a high-performance vector search system.
+
+### **1. The Dataset: Specialized Coursera Corpus**
+*   **Source**: A curated and scraped dataset of specialized courses from **Coursera**.
+*   **Attributes**: Includes course titles, providers (e.g., Google, IBM, Stanford), and detailed descriptions.
+*   **Vectorization**: The entire corpus is pre-processed and stored as **BERT embeddings** within the database.
+
+### **2. Vector Database (Supabase + pgvector)**
+*   **Technology**: **pgvector** extension on **Supabase**.
+*   **The Advantage**: Instead of standard SQL `LIKE` queries which fail with context, we use **Neighbor Search (Vector Similarity)**.
+*   **Indexing**: Uses an **HNSW (Hierarchical Navigable Small World)** index for sub-millisecond similarity search across the entire course library.
+
+### **3. Dynamic Matching Logic**
+When a learning module is generated:
+1.  **Context Synthesis**: A weighted search query is built using the `Module Title` + `Missing Skills`.
+2.  **On-Demand Embedding**: The BERT model (`all-MiniLM-L6-v2`) creates a 384D vector representing the *intent* of the module.
+3.  **Cross-Reference**: The algorithm performs an RPC call (`match_coursera_courses`) in Supabase to calculate the distance between the module's intent and the course library.
+4.  **Curated Suggested**: Only courses with a similarity score **> 0.35** are recommended, ensuring high relevance to the specific career gap.
+
+---
+
 ## 🛠️ Tech Stack
 
 ### **Frontend & UI**
@@ -117,10 +164,12 @@ graph TD
     A[User Interest Detector] --> B[BERT Vectorization]
     B --> C{Supabase Vector Search}
     C --> D[Ranked Career Candidates]
-    D --> E[Mistral AI]
-    E --> F[Personalized Roadmap]
+    D --> I[Skill Gap Analysis BERT + Chunking]
+    I --> E[Mistral AI Roadmap Generation]
+    E --> J{Semantic Course Search}
+    J --> F[Final Personalized Roadmap]
     F --> G[User Dashboard]
-    G --> H[Progress Tracking]
+    G --> H[Milestone Tracking]
 ```
 
 ---

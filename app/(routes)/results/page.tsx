@@ -19,14 +19,14 @@ import {
 } from "lucide-react";
 import type { CareerRecommendation, DashboardState } from "@/lib/types/careers";
 import { useRouter } from "next/navigation";
-import CareerStatsChart from "@/components/Careerstatschart";
+import CareerStatsChart from "@/components/dashboard/CareerStatsChart";
 
 export default function Results() {
   const [recommendations, setRecommendations] = useState<CareerRecommendation[]>([]);
   const [loading, setLoading] = useState(true);
   const [analysisTime, setAnalysisTime] = useState(0);
   const [expandedCard, setExpandedCard] = useState<number | null>(null);
-  const [selectedCareer, setSelectedCareer] = useState<number | null>(null);
+
   const [dashboard, setDashboard] = useState<DashboardState | null>(null);
   const [addingToDashboard, setAddingToDashboard] = useState<number | null>(null);
   const router = useRouter();
@@ -137,13 +137,7 @@ export default function Results() {
     [dashboard]
   );
 
-  const handleSelectCareer = useCallback(
-    (careerId: number) => {
-      setSelectedCareer(careerId);
-      setTimeout(() => router.push(`/roadmap/${careerId}`), 500);
-    },
-    [router]
-  );
+
 
   const toggleCard = useCallback((index: number) => {
     setExpandedCard((prev) => (prev === index ? null : index));
@@ -222,9 +216,9 @@ export default function Results() {
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4">
             Your Top 5 Career Matches
           </h1>
-          <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-            Click on any career to explore details, then select one to generate your personalized
-            learning roadmap.
+          <p className="text-zinc-400 max-w-2xl mx-auto">
+            Click on any career to explore details, then add one to your dashboard to start your
+            learning journey.
           </p>
         </motion.div>
 
@@ -232,7 +226,7 @@ export default function Results() {
         <div className="space-y-4">
           {recommendations.map((recommendation, index) => {
             const isExpanded = expandedCard === index;
-            const isSelected = selectedCareer === recommendation.career.id;
+
 
             return (
               <motion.div
@@ -244,10 +238,7 @@ export default function Results() {
                 className={`
                   relative border rounded-3xl overflow-hidden transition-all duration-300
                   backdrop-blur-xl
-                  ${isSelected
-                    ? 'border-green-500/50 bg-green-500/10 shadow-[0_0_30px_rgba(34,197,94,0.3)]'
-                    : 'border-white/10 bg-white/5 hover:border-white/20 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]'
-                  }
+                  border-white/10 bg-white/5 hover:border-white/20 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]
                   ${isExpanded ? 'shadow-2xl shadow-green-500/10' : 'hover:shadow-xl'}
                 `}
               >
@@ -418,7 +409,7 @@ export default function Results() {
                         )}
 
                         {/* Action Buttons */}
-                        <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="pt-4 grid grid-cols-1 gap-3">
                           {/* Add to Dashboard Button */}
                           <motion.button
                             onClick={(e) => {
@@ -466,36 +457,7 @@ export default function Results() {
                             )}
                           </motion.button>
 
-                          {/* Select Career Button */}
-                          <motion.button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSelectCareer(recommendation.career.id);
-                            }}
-                            disabled={isSelected}
-                            whileHover={!isSelected ? { scale: 1.02 } : {}}
-                            whileTap={!isSelected ? { scale: 0.98 } : {}}
-                            transition={{ ease: "easeInOut" }}
-                            className={`
-                              flex items-center justify-center gap-2 px-6 py-3.5 rounded-lg font-semibold transition-all
-                              ${isSelected
-                                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white cursor-default shadow-lg shadow-green-500/30'
-                                : 'bg-gradient-to-r from-white to-gray-100 text-black hover:shadow-xl hover:shadow-black/20'
-                              }
-                            `}
-                          >
-                            {isSelected ? (
-                              <>
-                                <Check className="w-5 h-5" />
-                                Generating Roadmap...
-                              </>
-                            ) : (
-                              <>
-                                Start Learning
-                                <ArrowRight className="w-5 h-5" />
-                              </>
-                            )}
-                          </motion.button>
+
                         </div>
                       </div>
                     </motion.div>
@@ -519,7 +481,7 @@ export default function Results() {
           <div className="p-8 border border-white/10 rounded-lg bg-white/5">
             <h3 className="text-2xl font-bold mb-4">Ready to start your journey?</h3>
             <p className="text-gray-400 mb-6 max-w-2xl mx-auto">
-              Select a career above to generate your personalized learning roadmap with curated
+              Add a career to your dashboard above to generate your personalized learning roadmap with curated
               resources and progress tracking.
             </p>
             <a
@@ -690,7 +652,7 @@ function CareerCard({
               <TagSection title="Typical Companies" items={career.typical_companies} icon={Briefcase} variant="subtle" />
 
               {/* Action Buttons */}
-              <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="pt-4 grid grid-cols-1 gap-3">
                 <ActionButton
                   onClick={(e) => {
                     e.stopPropagation();
@@ -719,26 +681,7 @@ function CareerCard({
                   )}
                 </ActionButton>
 
-                <ActionButton
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSelect();
-                  }}
-                  disabled={isSelected}
-                  variant={isSelected ? "success" : "white"}
-                >
-                  {isSelected ? (
-                    <>
-                      <Check className="w-5 h-5" />
-                      Generating Roadmap...
-                    </>
-                  ) : (
-                    <>
-                      Start Learning
-                      <ArrowRight className="w-5 h-5" />
-                    </>
-                  )}
-                </ActionButton>
+
               </div>
             </div>
           </motion.div>

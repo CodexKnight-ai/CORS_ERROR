@@ -128,6 +128,51 @@ export default function RoadmapPage() {
 
   const loadRoadmap = async () => {
     try {
+      // 1. Check Server First (Persistent State)
+      if (userId) {
+        const dashboardRes = await fetch("/api/dashboard");
+        if (dashboardRes.ok) {
+          const dashboardData = await dashboardRes.json();
+          const serverRoadmap = dashboardData.roadmaps?.find((r: any) => r.careerId === careerId);
+
+          if (serverRoadmap) {
+            // Found on server - use this as the source of truth
+            const mappedRoadmap: Roadmap = {
+              ...serverRoadmap,
+              // Ensure modules have correct status based on progress
+              modules: serverRoadmap.modules.map((m: any) => ({
+                ...m,
+                status: updateModuleStatus(m.progress),
+                subModules: m.subModules.map((s: any) => ({
+                  ...s,
+                  completed: s.completed || false
+                }))
+              }))
+            };
+
+            setRoadmap(mappedRoadmap);
+            
+            // Sync to local state for fast subsequent access
+            const completedSubs = new Set<string>();
+            const moduleProgs: Record<string, number> = {};
+            
+            mappedRoadmap.modules.forEach(m => {
+              moduleProgs[m.id] = m.progress;
+              m.subModules.forEach(s => {
+                if (s.completed) completedSubs.add(s.id);
+              });
+            });
+
+            setCompletedSubModules(completedSubs);
+            saveProgress(careerId, Array.from(completedSubs), moduleProgs, mappedRoadmap.overallProgress);
+            sessionStorage.setItem(`roadmap_${careerId}`, JSON.stringify(mappedRoadmap));
+            setLoading(false);
+            return;
+          }
+        }
+      }
+
+      // 2. Fallback to Local/Generation Logic
       let career: Career | undefined;
       const storedRecs = sessionStorage.getItem("careerRecommendations");
       if (storedRecs) {
@@ -206,11 +251,13 @@ export default function RoadmapPage() {
   }
 };
 
-  const toggleSubModule = (moduleId: string, subModuleId: string) => {
+  const toggleSubModule = async (moduleId: string, subModuleId: string) => {
     if (!roadmap) return;
     
     const newCompleted = new Set(completedSubModules);
-    newCompleted.has(subModuleId) ? newCompleted.delete(subModuleId) : newCompleted.add(subModuleId);
+    const isCompleted = !newCompleted.has(subModuleId);
+
+    isCompleted ? newCompleted.add(subModuleId) : newCompleted.delete(subModuleId);
     setCompletedSubModules(newCompleted);
 
     const moduleProgressRecord: Record<string, number> = {};
@@ -236,6 +283,25 @@ export default function RoadmapPage() {
     setRoadmap({ ...roadmap, modules: updatedModules, overallProgress });
     updateProgressInDB(moduleId, moduleProgressRecord[moduleId]);
     saveProgress(careerId, Array.from(newCompleted), moduleProgressRecord, overallProgress);
+
+    // Sync with server
+    if (userId) {
+      try {
+        await fetch("/api/dashboard", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            careerId,
+            moduleId,
+            subModuleId,
+            isCompleted,
+            updateLastAccessed: true
+          }),
+        });
+      } catch (error) {
+        console.error("Failed to sync progress with server:", error);
+      }
+    }
   };
 
   // --- Early Return for Loading State ---
@@ -271,13 +337,22 @@ export default function RoadmapPage() {
       {/* Header */}
       <header className="border-b border-white/10 pt-10 pb-10">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <button
-            onClick={() => router.push("/results")}
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8 group"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            <span className="text-sm font-medium">Exit Roadmap</span>
-          </button>
+          <div className="flex gap-4 mb-8">
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="flex items-center gap-2 text-white bg-white/10 px-4 py-2 rounded-full hover:bg-white/20 transition-all group"
+            >
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              <span className="text-sm font-medium">Back to Dashboard</span>
+            </button>
+            <button
+              onClick={() => router.push("/results")}
+              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors px-2"
+            >
+              <ExternalLink className="w-4 h-4" />
+              <span className="text-sm font-medium">View All Careers</span>
+            </button>
+          </div>
 
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
             <div className="space-y-4">
