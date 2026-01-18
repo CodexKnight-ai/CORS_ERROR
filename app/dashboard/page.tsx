@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Sparkles, LogOut, TrendingUp } from "lucide-react";
+import { Plus, Sparkles, LogOut, TrendingUp ,User} from "lucide-react";
 import type { DashboardState } from "@/lib/types/careers";
 import RoadmapCard from "@/components/dashboard/RoadmapCard";
 
@@ -118,13 +118,20 @@ export default function DashboardPage() {
                 </p>
               </div>
             </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 border border-white/20 rounded-lg hover:bg-white/5 transition-all text-sm"
-            >
-              <LogOut className="w-4 h-4" />
-              Logout
-            </button>
+            <div className="flex items-center gap-3">
+  <button
+    onClick={() => router.push("/profile")}
+    className="flex items-center justify-center w-10 h-10 border border-white/20 rounded-full hover:bg-white/5 transition-all"
+  >
+    <User className="w-5 h-5" />
+  </button>
+  <button
+    onClick={handleLogout}
+    className="flex items-center justify-center w-10 h-10 border border-white/20 rounded-full hover:bg-white/5 transition-all"
+  >
+    <LogOut className="w-5 h-5" />
+  </button>
+</div>
           </div>
         </div>
       </div>
