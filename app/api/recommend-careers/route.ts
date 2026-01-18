@@ -7,7 +7,7 @@ const MISTRAL_MODEL = process.env.MISTRAL_MODEL || "open-mistral-7b";
 
 export async function POST(request: NextRequest) {
   try {
-    const { answers }: { answers: UserAnswers } = await request.json();
+    const { answers, suggestedRoles }: { answers: UserAnswers; suggestedRoles?: any[] } = await request.json();
 
     if (!answers || Object.keys(answers).length === 0) {
       return NextResponse.json(
@@ -19,13 +19,14 @@ export async function POST(request: NextRequest) {
     const startTime = Date.now();
 
     // Step 1: Smart filtering based on user answers
-    const filteredCareers = filterCareersByAnswers(answers);
-    
+    // Use suggested roles if provided, otherwise fall back to all careers
+    const filteredCareers = filterCareersByAnswers(answers, suggestedRoles);
+
     console.log("Filtered careers:", filteredCareers.map(c => ({ id: c.id, name: c.field_name, score: c.matchScore })));
 
     // Step 2: Use AI to rank and provide reasoning for top candidates
     let recommendations: CareerRecommendation[];
-    
+
     if (MISTRAL_API_KEY && filteredCareers.length > 0) {
       try {
         recommendations = await getAIRankedRecommendations(answers, filteredCareers);
@@ -35,6 +36,7 @@ export async function POST(request: NextRequest) {
           career,
           matchScore: career.matchScore || 85,
           reasoning: generateReasoning(career, answers),
+          similarity: career.similarity
         }));
       }
     } else {
@@ -43,6 +45,7 @@ export async function POST(request: NextRequest) {
         career,
         matchScore: career.matchScore || 85,
         reasoning: generateReasoning(career, answers),
+        similarity: career.similarity
       }));
     }
 
@@ -61,9 +64,55 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function filterCareersByAnswers(answers: UserAnswers): (Career & { matchScore?: number })[] {
-  const careers = careersData as Career[];
-  
+
+function filterCareersByAnswers(answers: UserAnswers, suggestedRoles?: any[]): (Career & { matchScore?: number })[] {
+  // Use suggested roles if provided, otherwise use all careers from JSON
+  let careers: Career[];
+
+  if (suggestedRoles && suggestedRoles.length > 0) {
+    // Map suggested roles to Career format
+    // The suggested roles come from the database and may have different field names
+    careers = suggestedRoles.map(role => ({
+      id: role.id,
+      category: role.category || "Healthcare",
+      subdomain: role.subdomain || "",
+      field_name: role.title || role.field_name || role.name || "",
+      field_description: role.description || role.field_description || "",
+      skills_required: role.skills_required || [],
+      skills_breakdown: role.skills_breakdown || { foundational: [], intermediate: [], advanced: [] },
+      keywords: role.keywords || [],
+      prerequisites: role.prerequisites || [],
+      learning_path: role.learning_path || [],
+      tools_required: role.tools_required || [],
+      certifications: role.certifications || [],
+      avg_salary_inr: role.avg_salary_inr || role.salary || 0,
+      salary_range_inr: role.salary_range_inr || role.salary_range || "",
+      entry_level: role.entry_level || "",
+      mid_level: role.mid_level || "",
+      senior_level: role.senior_level || "",
+      demand_growth_2026: role.demand_growth_2026 || role.growth || "",
+      entry_level_duration: role.entry_level_duration || "",
+      career_progression: role.career_progression || [],
+      next_roles: role.next_roles || [],
+      interests_matching: role.interests_matching || [],
+      similar_roles: role.similar_roles || [],
+      industry_focus: role.industry_focus || [],
+      remote_friendly: role.remote_friendly || false,
+      job_market_saturation: role.job_market_saturation || "medium",
+      growth_potential_rating: role.growth_potential_rating || 5,
+      difficulty_rating: role.difficulty_rating || 5,
+      typical_companies: role.typical_companies || [],
+      similarity: role.similarity,
+      recognized_skills: role.recognized_skills || [],
+      missing_skills: role.missing_skills || [],
+      gap_analysis: role.gap_analysis || { foundational_gaps: [], intermediate_gaps: [], advanced_gaps: [] }
+    }));
+    console.log(`Using ${careers.length} suggested roles from onboarding`);
+  } else {
+    careers = careersData as Career[];
+    console.log(`Using all ${careers.length} careers from database`);
+  }
+
   // Extract key preferences from answers
   const interests = answers[0] || [];
   const problemSolving = answers[1] || [];
@@ -78,56 +127,63 @@ function filterCareersByAnswers(answers: UserAnswers): (Career & { matchScore?: 
     let score = 0;
     const reasons: string[] = [];
 
+    // Semantic Match (from Onboarding) - Max 30 points
+    if (career.similarity) {
+      const similarityScore = Math.round(career.similarity * 30);
+      score += similarityScore;
+      reasons.push('semantic match from onboarding');
+    }
+
     // Interest alignment (40 points max)
     if (interests.some(i => i.includes('data') || i.includes('numbers'))) {
-      if (career.field_name.toLowerCase().includes('data') || 
-          career.field_name.toLowerCase().includes('analytics') ||
-          career.field_name.toLowerCase().includes('ai')) {
+      if (career.field_name.toLowerCase().includes('data') ||
+        career.field_name.toLowerCase().includes('analytics') ||
+        career.field_name.toLowerCase().includes('ai')) {
         score += 40;
         reasons.push('data-focused');
       }
     }
-    
+
     if (interests.some(i => i.includes('software') || i.includes('Building'))) {
-      if (career.field_name.toLowerCase().includes('software') || 
-          career.field_name.toLowerCase().includes('developer') ||
-          career.field_name.toLowerCase().includes('engineer')) {
+      if (career.field_name.toLowerCase().includes('software') ||
+        career.field_name.toLowerCase().includes('developer') ||
+        career.field_name.toLowerCase().includes('engineer')) {
         score += 40;
         reasons.push('software development');
       }
     }
 
     if (interests.some(i => i.includes('clinical') || i.includes('patient care'))) {
-      if (career.field_name.toLowerCase().includes('clinical') || 
-          career.field_name.toLowerCase().includes('informatics') ||
-          career.subdomain.toLowerCase().includes('clinical')) {
+      if (career.field_name.toLowerCase().includes('clinical') ||
+        career.field_name.toLowerCase().includes('informatics') ||
+        career.subdomain.toLowerCase().includes('clinical')) {
         score += 40;
         reasons.push('clinical focus');
       }
     }
 
     if (interests.some(i => i.includes('security') || i.includes('compliance'))) {
-      if (career.field_name.toLowerCase().includes('security') || 
-          career.field_name.toLowerCase().includes('privacy') ||
-          career.field_name.toLowerCase().includes('compliance')) {
+      if (career.field_name.toLowerCase().includes('security') ||
+        career.field_name.toLowerCase().includes('privacy') ||
+        career.field_name.toLowerCase().includes('compliance')) {
         score += 40;
         reasons.push('security/compliance');
       }
     }
 
     if (interests.some(i => i.includes('Design') || i.includes('user-friendly'))) {
-      if (career.field_name.toLowerCase().includes('ux') || 
-          career.field_name.toLowerCase().includes('design') ||
-          career.field_name.toLowerCase().includes('interface')) {
+      if (career.field_name.toLowerCase().includes('ux') ||
+        career.field_name.toLowerCase().includes('design') ||
+        career.field_name.toLowerCase().includes('interface')) {
         score += 40;
         reasons.push('design-oriented');
       }
     }
 
     if (interests.some(i => i.includes('business') || i.includes('operational'))) {
-      if (career.field_name.toLowerCase().includes('analyst') || 
-          career.field_name.toLowerCase().includes('consultant') ||
-          career.field_name.toLowerCase().includes('manager')) {
+      if (career.field_name.toLowerCase().includes('analyst') ||
+        career.field_name.toLowerCase().includes('consultant') ||
+        career.field_name.toLowerCase().includes('manager')) {
         score += 40;
         reasons.push('business focus');
       }
@@ -153,9 +209,9 @@ function filterCareersByAnswers(answers: UserAnswers): (Career & { matchScore?: 
 
     // Work environment (15 points max)
     if (workEnvironment.some(w => w.includes('Tech companies') || w.includes('startups'))) {
-      if (career.typical_companies.some((c: string) => 
-        c.toLowerCase().includes('tech') || 
-        c.toLowerCase().includes('google') || 
+      if (career.typical_companies.some((c: string) =>
+        c.toLowerCase().includes('tech') ||
+        c.toLowerCase().includes('google') ||
         c.toLowerCase().includes('microsoft'))) {
         score += 15;
         reasons.push('tech company fit');
@@ -163,8 +219,8 @@ function filterCareersByAnswers(answers: UserAnswers): (Career & { matchScore?: 
     }
 
     if (workEnvironment.some(w => w.includes('Hospitals') || w.includes('clinical'))) {
-      if (career.typical_companies.some((c: string) => 
-        c.toLowerCase().includes('hospital') || 
+      if (career.typical_companies.some((c: string) =>
+        c.toLowerCase().includes('hospital') ||
         c.toLowerCase().includes('clinic') ||
         c.toLowerCase().includes('mayo'))) {
         score += 15;
@@ -192,9 +248,9 @@ function filterCareersByAnswers(answers: UserAnswers): (Career & { matchScore?: 
         score += 5;
       }
     } else if (careerGoal.some(g => g.includes('leadership') || g.includes('strategy'))) {
-      if (career.field_name.toLowerCase().includes('lead') || 
-          career.field_name.toLowerCase().includes('manager') ||
-          career.field_name.toLowerCase().includes('director')) {
+      if (career.field_name.toLowerCase().includes('lead') ||
+        career.field_name.toLowerCase().includes('manager') ||
+        career.field_name.toLowerCase().includes('director')) {
         score += 5;
       }
     }
@@ -315,24 +371,32 @@ function parseAIResponse(
     }
 
     const parsed = JSON.parse(jsonMatch[0]);
-    
+
     const recommendations: CareerRecommendation[] = [];
     const usedIds = new Set<number>();
 
     for (const item of parsed) {
       if (usedIds.has(item.careerId)) continue; // Skip duplicates
-      
-      const career = careersData.find((c: Career) => c.id === item.careerId);
+
+      // Look for career in filteredCareers first to preserve dynamic data (like similarity)
+      let career = filteredCareers.find(c => c.id === item.careerId);
+
+      // Fallback to careersData if not in filtered list (unexpected but safe)
+      if (!career) {
+        career = (careersData as Career[]).find(c => c.id === item.careerId);
+      }
+
       if (!career) continue;
 
       recommendations.push({
         career,
         matchScore: Math.min(100, Math.max(70, item.matchScore || 85)),
         reasoning: item.reasoning || "Matched based on your profile",
+        similarity: career.similarity
       });
 
       usedIds.add(item.careerId);
-      
+
       if (recommendations.length >= 5) break;
     }
 
@@ -344,6 +408,7 @@ function parseAIResponse(
           career,
           matchScore: career.matchScore || 80,
           reasoning: generateReasoning(career, {}),
+          similarity: career.similarity
         });
         usedIds.add(career.id);
       }
@@ -357,24 +422,29 @@ function parseAIResponse(
       career,
       matchScore: career.matchScore || 80,
       reasoning: generateReasoning(career, {}),
+      similarity: career.similarity
     }));
   }
 }
 
 function generateReasoning(career: Career, answers: UserAnswers): string {
   const reasons: string[] = [];
-  
+
   if (career.growth_potential_rating >= 8) {
     reasons.push("high growth potential");
   }
-  
+
   if (career.remote_friendly) {
     reasons.push("remote work options");
   }
-  
+
   if (career.difficulty_rating >= 7) {
     reasons.push("advanced technical role");
   }
-  
+
+  if (career.recognized_skills && career.recognized_skills.length > 0) {
+    reasons.push(`${career.recognized_skills.length} matched skills from your profile`);
+  }
+
   return `This career offers ${reasons.join(", ")} and aligns well with your interests in healthcare technology.`;
 }

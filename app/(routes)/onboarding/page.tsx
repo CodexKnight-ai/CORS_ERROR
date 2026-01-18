@@ -173,12 +173,34 @@ export default function HealthcareOnboardingForm() {
       return;
     }
 
+    // Send form data to suggest-roles API and save the response
+    try {
+      const suggestRolesRes = await fetch("/api/admin/suggest-roles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          skills: formData.skills,
+          education: formData.education,
+          projects: formData.projects,
+          achievements: formData.achievements,
+        }),
+      });
+
+      const suggestRolesData = await suggestRolesRes.json();
+      console.log("Suggest Roles Response:", suggestRolesData);
+
+      // Save the suggested roles to sessionStorage for use in interest detector
+      sessionStorage.setItem("suggestedJobRoles", JSON.stringify(suggestRolesData));
+    } catch (error) {
+      console.error("Error calling suggest-roles API:", error);
+    }
+
     setTestDialog(true);
   };
 
   return (
     <div className="min-h-screen bg-black text-zinc-100 selection:bg-white selection:text-black font-poppins">
-      
+
       {/* Background Grid Pattern (Matching Landing Page) */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
@@ -203,7 +225,7 @@ export default function HealthcareOnboardingForm() {
         </header>
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          
+
           {/* SKILLS */}
           <Section icon={Code2} title="Skills" subtitle="Technical & healthcare-related skills">
             <div className="flex gap-3">
@@ -237,7 +259,7 @@ export default function HealthcareOnboardingForm() {
                 >
                   {s}
                   <button
-                    type="button" 
+                    type="button"
                     onClick={() => removeSkill(s)}
                     className="ml-1 rounded-full p-0.5 hover:bg-white/20 hover:text-white"
                   >
@@ -366,7 +388,7 @@ export default function HealthcareOnboardingForm() {
                       onChange={(e) => updateAchievement(idx, "description", e.target.value)}
                     />
                   </div>
-                  
+
                   {formData.achievements.length > 1 && (
                     <button
                       type="button"

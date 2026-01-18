@@ -4,8 +4,10 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, CheckCircle2, Circle, ChevronDown, ChevronUp, Clock, Award, Target } from "lucide-react";
+import type { Career, CareerRecommendation, DashboardState } from "@/lib/types/careers";
 import type { Roadmap, Module, SubModule } from "@/lib/types/roadmap";
-import careersData from "@/lib/data/careers.json";
+import careersDataRaw from "@/lib/data/careers.json";
+const careersData = careersDataRaw as Career[];
 import { saveProgress, loadProgress, calculateModuleProgress, updateModuleStatus } from "@/lib/utils/progress";
 import VideoRecommendations from "@/components/roadmap/VideoRecommendations";
 import SkillGapAnalysis from "@/components/roadmap/SkillGapAnalysis";
@@ -25,9 +27,9 @@ export default function RoadmapPage() {
   const acquiredSkills = useMemo(() => {
     if (!roadmap) return new Set<string>();
     const skills = new Set<string>();
-    roadmap.modules.forEach(module => {
+    roadmap.modules.forEach((module: Module) => {
       if (module.status === 'completed' && module.relatedSkills) {
-        module.relatedSkills.forEach(skill => skills.add(skill));
+        module.relatedSkills.forEach((skill: string) => skills.add(skill));
       }
     });
     return skills;
@@ -36,12 +38,12 @@ export default function RoadmapPage() {
   // Calculate skill acquisition progress percentage
   const skillAcquisitionProgress = useMemo(() => {
     if (!roadmap || !roadmap.missingSkills || roadmap.missingSkills.length === 0) return 0;
-    
+
     const normalizedAcquired = new Set(Array.from(acquiredSkills).map(s => s.toLowerCase()));
-    const learnedCount = roadmap.missingSkills.filter(skill => 
+    const learnedCount = roadmap.missingSkills.filter((skill: string) =>
       normalizedAcquired.has(skill.toLowerCase())
     ).length;
-    
+
     return Math.round((learnedCount / roadmap.missingSkills.length) * 100);
   }, [roadmap, acquiredSkills]);
 
@@ -52,7 +54,7 @@ export default function RoadmapPage() {
   const loadRoadmap = async () => {
     try {
       // Find career data
-      const career = careersData.find((c: any) => c.id === careerId);
+      const career = (careersData as Career[]).find((c) => c.id === careerId);
       if (!career) {
         router.push("/results");
         return;
@@ -67,7 +69,7 @@ export default function RoadmapPage() {
         if (dashboardRes.ok) {
           const dashboardData = await dashboardRes.json();
           const dashboardRoadmap = dashboardData.roadmaps.find((r: any) => r.careerId === careerId);
-          
+
           if (dashboardRoadmap) {
             isInDashboard = true;
             // If dashboard has modules, use them (Single Source of Truth)
@@ -83,11 +85,12 @@ export default function RoadmapPage() {
                 videos: {}, // Videos might need to be regenerated or stored if we want persistence
                 recognizedSkills: dashboardRoadmap.recognizedSkills || [],
                 missingSkills: dashboardRoadmap.missingSkills || [],
+                similarity: dashboardRoadmap.similarity,
               };
-              
+
               // If estimatedDuration missing, pick from career data or first module
               if (parsedRoadmap && !parsedRoadmap.estimatedDuration) {
-                 parsedRoadmap.estimatedDuration = career.entry_level_duration || "Flexible";
+                parsedRoadmap.estimatedDuration = career.entry_level_duration || "Flexible";
               }
             }
           }
@@ -99,7 +102,7 @@ export default function RoadmapPage() {
       // 2. If not in dashboard (or empty), check sessionStorage
       if (!parsedRoadmap) {
         let storedRoadmap = sessionStorage.getItem(`roadmap_${careerId}`);
-        
+
         if (!storedRoadmap) {
           // 3. Generate new roadmap via API
           const response = await fetch("/api/generate-roadmap", {
@@ -115,8 +118,9 @@ export default function RoadmapPage() {
                 entry_level_duration: career.entry_level_duration,
               },
               // Pass skills for Gap Analysis
-              missingSkills: career.skills_required || [], 
-              recognizedSkills: [], // Assume fresh start
+              missingSkills: career.missing_skills || career.skills_required || [],
+              recognizedSkills: career.recognized_skills || [],
+              gapAnalysis: career.gap_analysis || null,
             }),
           });
 
@@ -130,19 +134,19 @@ export default function RoadmapPage() {
 
           sessionStorage.setItem(`roadmap_${careerId}`, JSON.stringify(data.roadmap));
           storedRoadmap = JSON.stringify(data.roadmap);
-          
+
           // If the roadmap exists in dashboard (but was empty), SAVE the generated modules now
           if (isInDashboard) {
-             await fetch("/api/dashboard", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                   careerId,
-                   modules: data.roadmap.modules,
-                   recognizedSkills: data.roadmap.recognizedSkills || [],
-                   missingSkills: data.roadmap.missingSkills || [],
-                })
-             });
+            await fetch("/api/dashboard", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                careerId,
+                modules: data.roadmap.modules,
+                recognizedSkills: data.roadmap.recognizedSkills || [],
+                missingSkills: data.roadmap.missingSkills || [],
+              })
+            });
           }
         }
 
@@ -150,24 +154,18 @@ export default function RoadmapPage() {
       }
 
       if (!parsedRoadmap) throw new Error("Could not load roadmap");
-
-      // Load progress from localStorage (Still useful for immediate local updates, 
-      // but Dashboard SHOULD be the source of truth if we fetched from it. 
-      // We'll merge: if Dashboard had progress, we rely on that. 
-      // If we generated fresh, we allow localStorage to override (legacy/offline support))
-      
       const progress = loadProgress(careerId);
       if (progress) {
         setCompletedSubModules(new Set(progress.completedSubModules));
-        
-        // Update roadmap with local progress matching
-        parsedRoadmap.modules = parsedRoadmap.modules.map(module => {
+
+
+        parsedRoadmap.modules = parsedRoadmap.modules.map((module: Module) => {
           const moduleProgress = progress.moduleProgress[module.id] || module.progress || 0; // Prefer local or existing
           return {
             ...module,
             progress: moduleProgress,
             status: updateModuleStatus(moduleProgress),
-            subModules: module.subModules.map(sub => ({
+            subModules: module.subModules.map((sub: SubModule) => ({
               ...sub,
               completed: progress.completedSubModules.includes(sub.id) || sub.completed,
             })),
@@ -178,7 +176,7 @@ export default function RoadmapPage() {
 
       setRoadmap(parsedRoadmap);
       setLoading(false);
-      
+
       // Update last accessed in dashboard
       updateLastAccessed(careerId);
     } catch (error) {
@@ -192,9 +190,9 @@ export default function RoadmapPage() {
       await fetch("/api/dashboard", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           careerId,
-          updateLastAccessed: true 
+          updateLastAccessed: true
         }),
       });
     } catch (error) {
@@ -215,8 +213,8 @@ export default function RoadmapPage() {
 
     // Calculate new progress
     const moduleProgress: Record<string, number> = {};
-    const updatedModules = roadmap.modules.map(module => {
-      const completedCount = module.subModules.filter(sub => 
+    const updatedModules = roadmap.modules.map((module: Module) => {
+      const completedCount = module.subModules.filter((sub: SubModule) =>
         newCompleted.has(sub.id)
       ).length;
       const progress = calculateModuleProgress(completedCount, module.subModules.length);
@@ -226,7 +224,7 @@ export default function RoadmapPage() {
         ...module,
         progress,
         status: updateModuleStatus(progress),
-        subModules: module.subModules.map(sub => ({
+        subModules: module.subModules.map((sub: SubModule) => ({
           ...sub,
           completed: newCompleted.has(sub.id),
         })),
@@ -246,15 +244,15 @@ export default function RoadmapPage() {
 
     // Save to localStorage
     saveProgress(careerId, Array.from(newCompleted), moduleProgress, overallProgress);
-    
+
     // Collect newly acquired skills from completed modules
     const newlyAcquiredSkills: string[] = [];
-    updatedModules.forEach(module => {
+    updatedModules.forEach((module: Module) => {
       if (module.status === 'completed' && module.relatedSkills) {
         newlyAcquiredSkills.push(...module.relatedSkills);
       }
     });
-    
+
     // Sync progress and skills to dashboard (MongoDB)
     syncProgressToDashboard(careerId, overallProgress, newlyAcquiredSkills);
   };
@@ -264,14 +262,14 @@ export default function RoadmapPage() {
       await fetch("/api/dashboard", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          careerId, 
+        body: JSON.stringify({
+          careerId,
           progress,
           skillsAcquired,
-          updateLastAccessed: true 
+          updateLastAccessed: true
         }),
       });
-      
+
       // Also sync to skill-gap API if skills were acquired
       if (skillsAcquired.length > 0) {
         await fetch("/api/skill-gap", {
@@ -321,7 +319,7 @@ export default function RoadmapPage() {
       {/* Floating Skill Progress Indicator */}
       {roadmap.missingSkills && roadmap.missingSkills.length > 0 && (
         <div className="fixed top-6 right-6 z-50 bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-2xl">
-          <CircularProgress 
+          <CircularProgress
             percentage={skillAcquisitionProgress}
             size={80}
             strokeWidth={8}
@@ -329,13 +327,13 @@ export default function RoadmapPage() {
             showPercentage={true}
           />
           <div className="mt-2 text-center text-xs text-gray-400">
-            {Array.from(acquiredSkills).filter(skill => 
+            {Array.from(acquiredSkills).filter(skill =>
               roadmap.missingSkills.some(m => m.toLowerCase() === skill.toLowerCase())
             ).length} of {roadmap.missingSkills.length}
           </div>
         </div>
       )}
-      
+
       {/* Header */}
       <div className="border-b border-white/10">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6">
@@ -370,7 +368,7 @@ export default function RoadmapPage() {
             </div>
             <div className="flex items-center justify-between mt-2 text-sm text-gray-400">
               <span>Estimated Duration: {roadmap.estimatedDuration}</span>
-              <span>{roadmap.modules.filter(m => m.status === 'completed').length} / {roadmap.modules.length} modules completed</span>
+              <span>{roadmap.modules.filter((m: Module) => m.status === 'completed').length} / {roadmap.modules.length} modules completed</span>
             </div>
           </div>
         </div>
@@ -380,7 +378,7 @@ export default function RoadmapPage() {
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
         {/* Skill Gap Analysis */}
         {(roadmap.recognizedSkills?.length > 0 || roadmap.missingSkills?.length > 0) && (
-          <SkillGapAnalysis 
+          <SkillGapAnalysis
             recognizedSkills={roadmap.recognizedSkills || []}
             missingSkills={roadmap.missingSkills || []}
             acquiredSkills={acquiredSkills}
@@ -407,8 +405,8 @@ export default function RoadmapPage() {
                 className={`
                   border rounded-3xl overflow-hidden transition-all duration-300
                   backdrop-blur-xl
-                  ${isExpanded 
-                    ? 'md:col-span-2 lg:col-span-3 border-white/20 bg-white/10 shadow-2xl' 
+                  ${isExpanded
+                    ? 'md:col-span-2 lg:col-span-3 border-white/20 bg-white/10 shadow-2xl'
                     : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 hover:shadow-xl'
                   }
                 `}
@@ -420,7 +418,7 @@ export default function RoadmapPage() {
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <motion.div 
+                      <motion.div
                         initial={{ scale: 0.9, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ delay: index * 0.05 + 0.1 }}
@@ -444,21 +442,21 @@ export default function RoadmapPage() {
                   </div>
 
                   <p className="text-sm text-gray-400 mb-4">{module.description}</p>
-                  
+
                   {/* Related Skills Badge */}
                   {module.relatedSkills && module.relatedSkills.length > 0 && (
-                     <div className="flex flex-wrap gap-1 mb-4">
-                        {module.relatedSkills.slice(0, 3).map((skill, i) => (
-                           <span key={i} className="px-1.5 py-0.5 bg-blue-500/10 text-blue-300 text-[10px] rounded border border-blue-500/20">
-                              {skill}
-                           </span>
-                        ))}
-                        {module.relatedSkills.length > 3 && (
-                           <span className="px-1.5 py-0.5 bg-gray-500/10 text-gray-400 text-[10px] rounded border border-gray-500/20">
-                              +{module.relatedSkills.length - 3}
-                           </span>
-                        )}
-                     </div>
+                    <div className="flex flex-wrap gap-1 mb-4">
+                      {module.relatedSkills.slice(0, 3).map((skill, i) => (
+                        <span key={i} className="px-1.5 py-0.5 bg-blue-500/10 text-blue-300 text-[10px] rounded border border-blue-500/20">
+                          {skill}
+                        </span>
+                      ))}
+                      {module.relatedSkills.length > 3 && (
+                        <span className="px-1.5 py-0.5 bg-gray-500/10 text-gray-400 text-[10px] rounded border border-gray-500/20">
+                          +{module.relatedSkills.length - 3}
+                        </span>
+                      )}
+                    </div>
                   )}
 
                   <div className="flex items-center gap-4 mb-4">
@@ -466,7 +464,7 @@ export default function RoadmapPage() {
                       <Clock className="w-4 h-4 text-green-400" />
                       {module.duration}
                     </div>
-                    <motion.div 
+                    <motion.div
                       initial={{ scale: 0.9, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{ delay: index * 0.05 + 0.2 }}
@@ -527,8 +525,8 @@ export default function RoadmapPage() {
                             transition={{ delay: subIndex * 0.05 }}
                             className={`
                               flex items-start gap-3 p-4 rounded-lg border transition-all cursor-pointer
-                              ${subModule.completed 
-                                ? 'bg-green-500/10 border-green-500/30 hover:bg-green-500/15' 
+                              ${subModule.completed
+                                ? 'bg-green-500/10 border-green-500/30 hover:bg-green-500/15'
                                 : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-green-500/30'
                               }
                             `}
@@ -536,9 +534,9 @@ export default function RoadmapPage() {
                             whileHover={{ scale: 1.01 }}
                             whileTap={{ scale: 0.99 }}
                           >
-                            <motion.div 
+                            <motion.div
                               className="mt-0.5"
-                              animate={{ 
+                              animate={{
                                 scale: subModule.completed ? [1, 1.2, 1] : 1,
                                 rotate: subModule.completed ? [0, 10, 0] : 0
                               }}
@@ -575,11 +573,11 @@ export default function RoadmapPage() {
                             </div>
                           </motion.div>
                         ))}
-                        
+
                         {/* Video Recommendations */}
                         {roadmap.videos[module.id] && roadmap.videos[module.id].length > 0 && (
-                          <VideoRecommendations 
-                            videos={roadmap.videos[module.id]} 
+                          <VideoRecommendations
+                            videos={roadmap.videos[module.id]}
                             moduleId={module.id}
                           />
                         )}

@@ -11,6 +11,7 @@ export interface DashboardRoadmap {
   modules: Module[];
   recognizedSkills: string[];
   missingSkills: string[];
+  similarity?: number;
 }
 
 export interface DashboardState {
@@ -58,6 +59,14 @@ export interface Career {
   growth_potential_rating: number;
   difficulty_rating: number;
   typical_companies: string[];
+  similarity?: number;
+  recognized_skills?: string[];
+  missing_skills?: string[];
+  gap_analysis?: {
+    foundational_gaps: string[];
+    intermediate_gaps: string[];
+    advanced_gaps: string[];
+  };
 }
 
 export type UserAnswers = Record<string, string[]>;
@@ -66,4 +75,5 @@ export interface CareerRecommendation {
   career: Career;
   matchScore: number;
   reasoning: string;
+  similarity?: number;
 }

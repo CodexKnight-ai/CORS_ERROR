@@ -40,7 +40,7 @@ export default function Results() {
     }
   };
 
-  const handleAddToDashboard = async (careerId: number, careerName: string, matchScore: number) => {
+  const handleAddToDashboard = async (careerId: number, careerName: string, matchScore: number, similarity?: number) => {
     setAddingToDashboard(careerId);
     try {
       // Find the career data
@@ -65,9 +65,9 @@ export default function Results() {
             difficulty_rating: career.difficulty_rating,
             entry_level_duration: career.entry_level_duration,
           },
-          recognizedSkills: [], // Would come from suggest-roles API
-          missingSkills: career.skills_required, // Would come from suggest-roles API
-          gapAnalysis: {
+          recognizedSkills: career.recognized_skills || [],
+          missingSkills: career.missing_skills || career.skills_required,
+          gapAnalysis: career.gap_analysis || {
             foundational_gaps: [],
             intermediate_gaps: [],
             advanced_gaps: [],
@@ -93,6 +93,7 @@ export default function Results() {
           recognizedSkills: roadmap.recognizedSkills || [],
           missingSkills: roadmap.missingSkills || [],
           gapAnalysis: roadmap.gapAnalysis || null,
+          similarity: similarity || roadmap.similarity,
         }),
       });
 
@@ -217,8 +218,8 @@ export default function Results() {
                 className={`
                   relative border rounded-3xl overflow-hidden transition-all duration-300
                   backdrop-blur-xl
-                  ${isSelected 
-                    ? 'border-green-500/50 bg-green-500/10 shadow-[0_0_30px_rgba(34,197,94,0.3)]' 
+                  ${isSelected
+                    ? 'border-green-500/50 bg-green-500/10 shadow-[0_0_30px_rgba(34,197,94,0.3)]'
                     : 'border-white/10 bg-white/5 hover:border-white/20 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]'
                   }
                   ${isExpanded ? 'shadow-2xl shadow-green-500/10' : 'hover:shadow-xl'}
@@ -248,14 +249,24 @@ export default function Results() {
                       </div>
 
                       <div className="flex items-center gap-2 mb-4">
-                        <motion.div 
+                        <motion.div
                           initial={{ scale: 0.9, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
                           transition={{ delay: index * 0.1 + 0.2, ease: "easeInOut" }}
                           className="px-3 py-1.5 bg-gradient-to-r from-green-500/20 to-green-600/20 border border-green-500/40 rounded-full text-green-400 text-sm font-semibold shadow-lg shadow-green-500/10"
                         >
-                          {recommendation.matchScore}% Match
+                          {((recommendation.similarity ?? recommendation.career.similarity ?? (recommendation.matchScore / 100)) * 100).toFixed(2)}% Match
                         </motion.div>
+                        {recommendation.career.recognized_skills && recommendation.career.recognized_skills.length > 0 && (
+                          <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: index * 0.1 + 0.3, ease: "easeInOut" }}
+                            className="px-3 py-1.5 bg-gradient-to-r from-blue-500/20 to-blue-600/20 border border-blue-500/40 rounded-full text-blue-400 text-sm font-semibold shadow-lg shadow-blue-500/10"
+                          >
+                            {recommendation.career.recognized_skills.length} Skill{recommendation.career.recognized_skills.length === 1 ? '' : 's'} Matched
+                          </motion.div>
+                        )}
                         {/* {recommendation.career.remote_friendly && (
                           <motion.div 
                             initial={{ scale: 0.9, opacity: 0 }}
@@ -268,34 +279,35 @@ export default function Results() {
                         )} */}
                       </div>
 
+
                       {/* Key Stats - Always Visible */}
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="flex items-start gap-2">
                           <DollarSign className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
                           <div>
                             <p className="text-xs text-gray-400">Salary Range</p>
-                            <p className="text-sm font-semibold">{recommendation.career.salary_range_inr}</p>
+                            <p className="text-sm font-semibold">{recommendation.career.salary_range_inr || 'N/A'}</p>
                           </div>
                         </div>
                         <div className="flex items-start gap-2">
                           <TrendingUp className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
                           <div>
                             <p className="text-xs text-gray-400">Growth 2026</p>
-                            <p className="text-sm font-semibold">{recommendation.career.demand_growth_2026}</p>
+                            <p className="text-sm font-semibold">{recommendation.career.demand_growth_2026 || 'N/A'}</p>
                           </div>
                         </div>
                         <div className="flex items-start gap-2">
                           <Clock className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" />
                           <div>
                             <p className="text-xs text-gray-400">Entry Duration</p>
-                            <p className="text-sm font-semibold">{recommendation.career.entry_level_duration}</p>
+                            <p className="text-sm font-semibold">{recommendation.career.entry_level_duration || 'N/A'}</p>
                           </div>
                         </div>
                         <div className="flex items-start gap-2">
                           <Award className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" />
                           <div>
                             <p className="text-xs text-gray-400">Difficulty</p>
-                            <p className="text-sm font-semibold">{recommendation.career.difficulty_rating}/10</p>
+                            <p className="text-sm font-semibold">{recommendation.career.difficulty_rating || 'N/A'}/10</p>
                           </div>
                         </div>
                       </div>
@@ -323,55 +335,61 @@ export default function Results() {
                         {/* Description */}
                         <div>
                           <p className="text-sm font-semibold mb-2">About this career:</p>
-                          <p className="text-gray-300">{recommendation.career.field_description}</p>
+                          <p className="text-gray-300">{recommendation.career.field_description || 'No description available.'}</p>
                         </div>
 
                         {/* Skills Required */}
-                        <div>
-                          <p className="text-sm font-semibold mb-3">Key Skills Required:</p>
-                          <div className="flex flex-wrap gap-2">
-                            {recommendation.career.skills_required.map((skill, idx) => (
-                              <span
-                                key={idx}
-                                className="px-3 py-1 bg-white/10 border border-white/20 rounded-full text-xs"
-                              >
-                                {skill}
-                              </span>
-                            ))}
+                        {recommendation.career.skills_required && recommendation.career.skills_required.length > 0 && (
+                          <div>
+                            <p className="text-sm font-semibold mb-3">Key Skills Required:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {recommendation.career.skills_required.map((skill, idx) => (
+                                <span
+                                  key={idx}
+                                  className="px-3 py-1 bg-white/10 border border-white/20 rounded-full text-xs"
+                                >
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
                           </div>
-                        </div>
+                        )}
 
                         {/* Industry Focus */}
-                        <div>
-                          <p className="text-sm font-semibold mb-3">Industry Focus:</p>
-                          <div className="flex flex-wrap gap-2">
-                            {recommendation.career.industry_focus.map((industry, idx) => (
-                              <span
-                                key={idx}
-                                className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs flex items-center gap-1"
-                              >
-                                <MapPin className="w-3 h-3" />
-                                {industry}
-                              </span>
-                            ))}
+                        {recommendation.career.industry_focus && recommendation.career.industry_focus.length > 0 && (
+                          <div>
+                            <p className="text-sm font-semibold mb-3">Industry Focus:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {recommendation.career.industry_focus.map((industry, idx) => (
+                                <span
+                                  key={idx}
+                                  className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs flex items-center gap-1"
+                                >
+                                  <MapPin className="w-3 h-3" />
+                                  {industry}
+                                </span>
+                              ))}
+                            </div>
                           </div>
-                        </div>
+                        )}
 
                         {/* Typical Companies */}
-                        <div>
-                          <p className="text-sm font-semibold mb-3">Typical Companies:</p>
-                          <div className="flex flex-wrap gap-2">
-                            {recommendation.career.typical_companies.map((company, idx) => (
-                              <span
-                                key={idx}
-                                className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs flex items-center gap-1"
-                              >
-                                <Briefcase className="w-3 h-3" />
-                                {company}
-                              </span>
-                            ))}
+                        {recommendation.career.typical_companies && recommendation.career.typical_companies.length > 0 && (
+                          <div>
+                            <p className="text-sm font-semibold mb-3">Typical Companies:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {recommendation.career.typical_companies.map((company, idx) => (
+                                <span
+                                  key={idx}
+                                  className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs flex items-center gap-1"
+                                >
+                                  <Briefcase className="w-3 h-3" />
+                                  {company}
+                                </span>
+                              ))}
+                            </div>
                           </div>
-                        </div>
+                        )}
 
                         {/* Action Buttons */}
                         <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -382,7 +400,8 @@ export default function Results() {
                               handleAddToDashboard(
                                 recommendation.career.id,
                                 recommendation.career.field_name,
-                                recommendation.matchScore
+                                recommendation.matchScore,
+                                recommendation.similarity || recommendation.career.similarity
                               );
                             }}
                             disabled={isInDashboard(recommendation.career.id) || isDashboardFull() || addingToDashboard === recommendation.career.id}
@@ -394,8 +413,8 @@ export default function Results() {
                               ${isInDashboard(recommendation.career.id)
                                 ? 'bg-gradient-to-r from-green-500 to-green-600 text-white cursor-default shadow-lg shadow-green-500/30'
                                 : isDashboardFull()
-                                ? 'bg-gray-500/20 text-gray-400 cursor-not-allowed border border-gray-500/30'
-                                : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:shadow-xl hover:shadow-blue-500/20'
+                                  ? 'bg-gray-500/20 text-gray-400 cursor-not-allowed border border-gray-500/30'
+                                  : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:shadow-xl hover:shadow-blue-500/20'
                               }
                             `}
                           >

@@ -39,6 +39,7 @@ export interface Roadmap {
   missingSkills: string[];
   reasoning?: string;
   gapAnalysis?: GapAnalysis;
+  similarity?: number;
 }
 
 export interface UserProgress {

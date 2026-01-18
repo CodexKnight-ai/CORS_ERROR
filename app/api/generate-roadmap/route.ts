@@ -90,10 +90,10 @@ export async function POST(request: NextRequest) {
 }
 
 function buildRoadmapPrompt(careerData: any, missingSkills: string[] = [], recognizedSkills: string[] = [], gapAnalysis?: any): string {
-  const missingContext = missingSkills.length > 0 
+  const missingContext = missingSkills.length > 0
     ? `The user lacks these specific skills: ${missingSkills.join(", ")}.`
     : "The user is starting fresh.";
-    
+
   const recognizedContext = recognizedSkills.length > 0
     ? `The user already knows: ${recognizedSkills.join(", ")}.`
     : "No prior relevant skills.";
@@ -150,7 +150,7 @@ function parseAIRoadmap(aiResponse: string, careerId: number, careerName: string
     }
 
     const parsed = JSON.parse(jsonMatch[0]);
-    
+
     // Transform to our Roadmap format
     const modules: Module[] = parsed.modules.map((module: any) => ({
       ...module,
@@ -187,20 +187,23 @@ function loadCuratedVideos(careerName: string, modules: Module[]): Record<string
   try {
     // Import videos data
     // const videosData = require("@/lib/data/videos.json"); // Replaced with top-level import
-    
+
     // Normalize career name to match video database keys
     const careerKey = careerName.toLowerCase().replace(/\s+/g, '-');
-    
+
+    // Type the data for indexing
+    const typedVideosData = videosData as Record<string, any>;
+
     // Get videos for this career or use default
-    const careerVideos = videosData[careerKey] || videosData.default;
-    
+    const careerVideos = typedVideosData[careerKey] || typedVideosData.default;
+
     // Map videos to modules
     const videoMap: Record<string, any[]> = {};
     modules.forEach((module) => {
-      const moduleVideos = careerVideos[module.id] || careerVideos["module-1"] || [];
+      const moduleVideos = (careerVideos as Record<string, any[]>)[module.id] || (careerVideos as Record<string, any[]>)["module-1"] || [];
       videoMap[module.id] = moduleVideos;
     });
-    
+
     return videoMap;
   } catch (error) {
     console.error("Error loading curated videos:", error);
