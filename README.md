@@ -3,6 +3,7 @@
 **AI-Powered Career Intelligence & Learning Ecosystem for Healthcare Technology**
 
 SkillOrbit is a comprehensive, AI-driven career guidance platform that leverages a hybrid AI architecture to help users discover personalized career paths, identify skill gaps, and navigate their professional journey through intelligent recommendations and structured learning roadmaps.
+![SkillOrbit Landing Page](public/landingPage.jpg)
 
 ---
 
@@ -62,6 +63,7 @@ Unmatched skills are categorized into a hierarchical gap report:
 *   **Foundational Gaps**: Missing core skills required to start the career.
 *   **Intermediate/Advanced Gaps**: Skills needed for professional growth.
 *   **Result**: This data is passed to **Mistral AI** to ensure the generated Roadmap prioritizes foundational gaps first.
+![Hyper-Sensitive Skill Gap Algorithm](public/ai2.png)
 
 ---
 
@@ -85,6 +87,7 @@ When a learning module is generated:
 2.  **On-Demand Embedding**: The BERT model (`all-MiniLM-L6-v2`) creates a 384D vector representing the *intent* of the module.
 3.  **Cross-Reference**: The algorithm performs an RPC call (`match_coursera_courses`) in Supabase to calculate the distance between the module's intent and the course library.
 4.  **Curated Suggested**: Only courses with a similarity score **> 0.35** are recommended, ensuring high relevance to the specific career gap.
+![Semantic Course Recommendation Engine](public/ai1.png)
 
 ---
 
@@ -171,6 +174,7 @@ graph TD
     F --> G[User Dashboard]
     G --> H[Milestone Tracking]
 ```
+![SkillOrbit System Architecture](public/skillOrbit_architecture1.png)
 
 ---
 *Developed for the Ingenium 2026 Hackathon - Empowering the next generation of healthcare technologists.*

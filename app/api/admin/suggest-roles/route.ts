@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/app/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { pipeline } from '@huggingface/transformers';
 
 function cosineSimilarity(vecA: number[], vecB: number[]) {
@@ -73,47 +73,22 @@ export async function POST(req: Request) {
                 let isFound = false;
 
                 for (const chunk of chunkEmbeddings) {
-                    // TIER 1: Direct or Substring Match (e.g., "React" found in "React.js Developer")
-                    if (chunk.text.includes(reqLower) || reqLower.includes(chunk.text)) {
+                    // TIER 1: Direct Word Match (Case Insensitive)
+                    // Uses regex to ensure we match "React" but not "Reactive" or "Reach"
+                    const escapedReq = reqLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const wordRegex = new RegExp(`\\b${escapedReq}\\b`, 'i');
+
+                    if (wordRegex.test(chunk.text)) {
                         isFound = true;
                         break;
                     }
 
                     // TIER 2: Aggressive Semantic Match
-                    // Lowered to 0.60 to capture related concepts (e.g., "Git" matching "Version Control")
+                    // Increased to 0.75 for better precision (0.60 was too low)
                     const score = cosineSimilarity(reqVec, chunk.embedding);
-                    if (score > 0.60) {
+                    if (score > 0.75) {
                         isFound = true;
                         break;
-                    }
-                }
-
-                if (isFound) recognized.push(reqSkill);
-                else missing.push(reqSkill);
-            }
-
-            return {
-                ...job,
-                // Recalculate match percentage based on the actual skill discovery
-                match_percentage: Math.round((recognized.length / (recognized.length + missing.length)) * 100),
-                recognized_skills: recognized,
-                missing_skills: missing,
-                gap_analysis: {
-                    foundational_gaps: (job.skills_breakdown?.foundational || []).filter((s: string) => missing.includes(s)),
-                    intermediate_gaps: (job.skills_breakdown?.intermediate || []).filter((s: string) => missing.includes(s)),
-                    advanced_gaps: (job.skills_breakdown?.advanced || []).filter((s: string) => missing.includes(s))
-                }
-            };
-        }));
-
-        return NextResponse.json(
-            finalResults.sort((a, b) => b.match_percentage - a.match_percentage).slice(0, 7)
-        );
-
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
-    }
-}                       break;
                     }
                 }
 
