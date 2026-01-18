@@ -21,6 +21,12 @@ In today's rapidly evolving job market, identifying the right career path is cha
 *   **📊 Interactive Dashboard**: Manage up to 3 active roadmaps simultaneously with real-time progress tracking and persistent state.
 
 ---
+# User Form
+![UserForm](public/form1.jpg)
+![UserForm](public/form2.jpg)
+
+# Top 3 Career Recommendations
+![Top 3 Career Recommendations](public/top_paths.jpg)
 
 ## 🧠 AI Intelligence: The Hybrid Approach
 
@@ -64,7 +70,7 @@ Unmatched skills are categorized into a hierarchical gap report:
 *   **Intermediate/Advanced Gaps**: Skills needed for professional growth.
 *   **Result**: This data is passed to **Mistral AI** to ensure the generated Roadmap prioritizes foundational gaps first.
 ![Hyper-Sensitive Skill Gap Algorithm](public/ai2.png)
-
+![Skill Gap ScreenShot](public/skill_gap.jpg)
 ---
 
 ## 🎓 Semantic Course Recommendation Engine
@@ -88,9 +94,20 @@ When a learning module is generated:
 3.  **Cross-Reference**: The algorithm performs an RPC call (`match_coursera_courses`) in Supabase to calculate the distance between the module's intent and the course library.
 4.  **Curated Suggested**: Only courses with a similarity score **> 0.35** are recommended, ensuring high relevance to the specific career gap.
 ![Semantic Course Recommendation Engine](public/ai1.png)
-
+![Course Recommendation ScreenShot](public/course_recom.jpg)
 ---
 
+#Extra Features
+## Live notes making with each course module (used production grade DEBOUNCING METHOD)
+![Extra Features](public/extra1.jpg)
+
+## QnA for personalized planning
+![Extra Features](public/extra2.jpg)
+![Extra Features](public/extra3.jpg)
+
+## 3-d Hero section
+![Extra Features](public/extra4.jpg)
+![Extra Features](public/extra5.jpg)
 ## 🛠️ Tech Stack
 
 ### **Frontend & UI**
