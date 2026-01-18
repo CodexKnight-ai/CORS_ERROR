@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/app/lib/supabase';
 import { pipeline } from '@huggingface/transformers';
 
 function cosineSimilarity(vecA: number[], vecB: number[]) {
@@ -85,6 +85,35 @@ export async function POST(req: Request) {
                     if (score > 0.60) {
                         isFound = true;
                         break;
+                    }
+                }
+
+                if (isFound) recognized.push(reqSkill);
+                else missing.push(reqSkill);
+            }
+
+            return {
+                ...job,
+                // Recalculate match percentage based on the actual skill discovery
+                match_percentage: Math.round((recognized.length / (recognized.length + missing.length)) * 100),
+                recognized_skills: recognized,
+                missing_skills: missing,
+                gap_analysis: {
+                    foundational_gaps: (job.skills_breakdown?.foundational || []).filter((s: string) => missing.includes(s)),
+                    intermediate_gaps: (job.skills_breakdown?.intermediate || []).filter((s: string) => missing.includes(s)),
+                    advanced_gaps: (job.skills_breakdown?.advanced || []).filter((s: string) => missing.includes(s))
+                }
+            };
+        }));
+
+        return NextResponse.json(
+            finalResults.sort((a, b) => b.match_percentage - a.match_percentage).slice(0, 7)
+        );
+
+    } catch (err: any) {
+        return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+}                       break;
                     }
                 }
 
