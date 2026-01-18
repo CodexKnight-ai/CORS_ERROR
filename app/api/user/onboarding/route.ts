@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
-import User from "@/models/User";
+import User from "@/lib/models/User";
 
 export const PUT = async (req: NextRequest) => {
   try {

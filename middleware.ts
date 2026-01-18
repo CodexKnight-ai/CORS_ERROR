@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/jwt";
 
-export const proxy = async (req: NextRequest) => {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Define protected routes

@@ -1,5 +1,5 @@
 import connectToDatabase from "@/lib/db";
-import { Note } from "@/models/Note";
+import { Note } from "@/lib/models/Note";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: Request) {
