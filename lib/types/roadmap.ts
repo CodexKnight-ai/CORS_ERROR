@@ -34,7 +34,7 @@ export interface Roadmap {
   modules: Module[];
   overallProgress: number;
   estimatedDuration: string;
-  videos: Record<string, YouTubeVideo[]>; // moduleId -> videos
+  videos?: Record<string, YouTubeVideo[]>; // moduleId -> videos
   recognizedSkills: string[];
   missingSkills: string[];
   reasoning?: string;
