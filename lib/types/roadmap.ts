@@ -7,6 +7,14 @@ export interface SubModule {
   completed?: boolean;
 }
 
+export interface Course {
+  title: string;
+  link: string;
+  imageUrl?: string;
+  partner?: string;
+  similarity?: number;
+}
+
 export interface Module {
   id: string;
   title: string;
@@ -16,6 +24,7 @@ export interface Module {
   status: 'pending' | 'in-progress' | 'completed';
   progress: number; // 0-100
   relatedSkills: string[]; // Skills learned in this module
+  suggestedCourses?: Course[];
 }
 
 export interface YouTubeVideo {

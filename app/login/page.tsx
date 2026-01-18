@@ -71,7 +71,6 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   // Clear error after 5 seconds
   useEffect(() => {
