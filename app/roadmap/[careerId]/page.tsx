@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -88,11 +88,15 @@ export default function RoadmapPage() {
   const params = useParams();
   const router = useRouter();
   const careerId = parseInt(params.careerId as string);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
   const [completedSubModules, setCompletedSubModules] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<"map" | "list">("map");
+  const [dimensions, setDimensions] = useState({ width: 1200, height: 800 });
 
   const acquiredSkills = useMemo(() => {
     if (!roadmap) return new Set<string>();
@@ -302,8 +306,8 @@ export default function RoadmapPage() {
                   key={module.id}
                   layout
                   className={`group border rounded-[2.5rem] transition-all duration-500 overflow-hidden ${isExpanded
-                      ? 'bg-white/[0.04] border-white/20 shadow-2xl'
-                      : 'bg-white/[0.01] border-white/5 hover:border-white/10'
+                    ? 'bg-white/[0.04] border-white/20 shadow-2xl'
+                    : 'bg-white/[0.01] border-white/5 hover:border-white/10'
                     }`}
                 >
                   <div

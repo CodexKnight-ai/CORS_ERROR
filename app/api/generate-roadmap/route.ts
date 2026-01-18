@@ -99,14 +99,16 @@ export async function POST(request: NextRequest) {
 
       if (matchError) console.error("Search error:", matchError);
 
+      const moduleId = module.id || `mod-${Math.random().toString(36).substr(2, 9)}`;
       return {
         ...module,
-        id: module.id || `mod-${Math.random().toString(36).substr(2, 9)}`,
+        id: moduleId,
         status: 'pending' as const,
         progress: 0,
         suggestedCourses: matchedCourses || [],
-        subModules: (module.subModules || []).map((sub: any) => ({
+        subModules: (module.subModules || []).map((sub: any, subIdx: number) => ({
           ...sub,
+          id: sub.id || `${moduleId}-sub-${subIdx}`,
           completed: false,
         })),
       };
