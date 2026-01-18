@@ -1,27 +1,34 @@
-# SkillOrbit 🚀
+# SkillOrbit 
 
 **AI-Powered Career Intelligence & Learning Ecosystem for Healthcare Technology**
 
 SkillOrbit is a comprehensive, AI-driven career guidance platform that leverages a hybrid AI architecture to help users discover personalized career paths, identify skill gaps, and navigate their professional journey through intelligent recommendations and structured learning roadmaps.
+![SkillOrbit Landing Page](public/landingPage.jpg)
 
 ---
 
-## 🎯 Project Overview & Features
+##  Project Overview & Features
 
 In today's rapidly evolving job market, identifying the right career path is challenging. SkillOrbit addresses this by analyzing user intent beyond simple keywords, providing a data-driven "GPS" for professional growth.
 
-### ✨ Key Features
-*   **🧠 Intelligent Interest Detector**: A sophisticated 7-factor assessment analyzing cognitive styles, technical depth, work environment, and impact motivation.
-*   **🎯 Semantic Career Matching**: Harnesses BERT embeddings to discover ideal roles based on the "meaning" of your background, not just keyword matches.
-*   **📚 Dynamic AI Roadmaps**: Generates on-demand learning paths with modular milestones, sub-topics, and estimated durations using Mistral AI.
-*   **🔬 Hyper-Sensitive Skill Gap Analysis**: Uses micro-contextual chunking to identify exactly which skills you possess and which ones are target gaps.
-*   **🎓 Integrated Course Recommendations**: Automatically matches learning modules with specialized Coursera courses using vector search (Supabase pgvector).
-*   **✨ Immersive 3D Experience**: Cinematic hero section powered by **Spline**, creating a futuristic and engaging user entry point.
-*   **📊 Interactive Dashboard**: Manage up to 3 active roadmaps simultaneously with real-time progress tracking and persistent state.
+###  Key Features
+*   **Intelligent Interest Detector**: A sophisticated 7-factor assessment analyzing cognitive styles, technical depth, work environment, and impact motivation.
+*   **Semantic Career Matching**: Harnesses BERT embeddings to discover ideal roles based on the "meaning" of your background, not just keyword matches.
+*   **Dynamic AI Roadmaps**: Generates on-demand learning paths with modular milestones, sub-topics, and estimated durations using Mistral AI.
+*   **Hyper-Sensitive Skill Gap Analysis**: Uses micro-contextual chunking to identify exactly which skills you possess and which ones are target gaps.
+*   **Integrated Course Recommendations**: Automatically matches learning modules with specialized Coursera courses using vector search (Supabase pgvector).
+*   **Immersive 3D Experience**: Cinematic hero section powered by **Spline**, creating a futuristic and engaging user entry point.
+*   **Interactive Dashboard**: Manage up to 3 active roadmaps simultaneously with real-time progress tracking and persistent state.
 
 ---
+# User Form
+![UserForm](public/form1.jpg)
+![UserForm](public/form2.jpg)
 
-## 🧠 AI Intelligence: The Hybrid Approach
+# Top 3 Career Recommendations
+![Top 3 Career Recommendations](public/top_paths.jpg)
+
+##  AI Intelligence: The Hybrid Approach
 
 SkillOrbit uses a specialized two-tier AI system to balance logical reasoning with precise semantic understanding.
 
@@ -62,7 +69,8 @@ Unmatched skills are categorized into a hierarchical gap report:
 *   **Foundational Gaps**: Missing core skills required to start the career.
 *   **Intermediate/Advanced Gaps**: Skills needed for professional growth.
 *   **Result**: This data is passed to **Mistral AI** to ensure the generated Roadmap prioritizes foundational gaps first.
-
+![Hyper-Sensitive Skill Gap Algorithm](public/ai2.png)
+![Skill Gap ScreenShot](public/skill_gap.jpg)
 ---
 
 ## 🎓 Semantic Course Recommendation Engine
@@ -85,9 +93,21 @@ When a learning module is generated:
 2.  **On-Demand Embedding**: The BERT model (`all-MiniLM-L6-v2`) creates a 384D vector representing the *intent* of the module.
 3.  **Cross-Reference**: The algorithm performs an RPC call (`match_coursera_courses`) in Supabase to calculate the distance between the module's intent and the course library.
 4.  **Curated Suggested**: Only courses with a similarity score **> 0.35** are recommended, ensuring high relevance to the specific career gap.
-
+![Semantic Course Recommendation Engine](public/ai1.png)
+![Course Recommendation ScreenShot](public/course_recom.jpg)
 ---
 
+#Extra Features
+## Live notes making with each course module (used production grade DEBOUNCING METHOD)
+![Extra Features](public/extra1.jpg)
+
+## QnA for personalized planning
+![Extra Features](public/extra2.jpg)
+![Extra Features](public/extra3.jpg)
+
+## 3-d Hero section
+![Extra Features](public/extra4.jpg)
+![Extra Features](public/extra5.jpg)
 ## 🛠️ Tech Stack
 
 ### **Frontend & UI**
@@ -171,6 +191,7 @@ graph TD
     F --> G[User Dashboard]
     G --> H[Milestone Tracking]
 ```
+![SkillOrbit System Architecture](public/skillOrbit_architecture1.png)
 
 ---
 *Developed for the Ingenium 2026 Hackathon - Empowering the next generation of healthcare technologists.*
