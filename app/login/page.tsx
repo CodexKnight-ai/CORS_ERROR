@@ -72,7 +72,6 @@ export default function LoginPage() {
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const from = searchParams.get('from') || '/dashboard';
 
   // Clear error after 5 seconds
   useEffect(() => {
@@ -102,7 +101,7 @@ export default function LoginPage() {
         throw new Error(data.message || 'Something went wrong');
       }
 
-      router.push(from);
+      router.push('/dashboard');
       router.refresh();
     } catch (err: any) {
       setError(err.message);

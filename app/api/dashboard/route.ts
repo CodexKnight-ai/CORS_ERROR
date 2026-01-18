@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
     // Find or create dashboard
     let dashboard = await UserDashboard.findOne({ userId: decoded.userId });
-    
+
     if (!dashboard) {
       // Fetch user to get email
       const user = await User.findById(decoded.userId);
@@ -82,7 +82,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { careerId, careerName, matchScore } = await request.json();
+    // POST - Add roadmap to dashboard
+    const { careerId, careerName, matchScore, modules, estimatedDuration, recognizedSkills, missingSkills, gapAnalysis, similarity } = await request.json();
 
     if (!careerId || !careerName || matchScore === undefined) {
       return NextResponse.json(
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
 
     // Find or create dashboard
     let dashboard = await UserDashboard.findOne({ userId: decoded.userId });
-    
+
     if (!dashboard) {
       // Fetch user to get email
       const user = await User.findById(decoded.userId);
@@ -137,7 +138,13 @@ export async function POST(request: NextRequest) {
       matchScore,
       addedAt: new Date(),
       progress: 0,
-    });
+      modules: modules || [], // Store the generated modules
+      recognizedSkills: recognizedSkills || [],
+      missingSkills: missingSkills || [],
+      skillsAcquired: [], // Initialize as empty
+      gapAnalysis: gapAnalysis || null,
+      similarity: similarity,
+    } as any); // Type casting for Mongoose array push
 
     await dashboard.save();
 
@@ -187,7 +194,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     const dashboard = await UserDashboard.findOne({ userId: decoded.userId });
-    
+
     if (!dashboard) {
       return NextResponse.json(
         { error: "Dashboard not found" },
@@ -238,7 +245,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const { careerId, progress, updateLastAccessed } = await request.json();
+    const { careerId, moduleId, subModuleId, isCompleted, updateLastAccessed, modules, recognizedSkills, missingSkills, skillsAcquired } = await request.json();
 
     if (!careerId) {
       return NextResponse.json(
@@ -248,7 +255,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const dashboard = await UserDashboard.findOne({ userId: decoded.userId });
-    
+
     if (!dashboard) {
       return NextResponse.json(
         { error: "Dashboard not found" },
@@ -256,9 +263,9 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Find and update roadmap
+    // Find the roadmap
     const roadmap = dashboard.roadmaps.find((r) => r.careerId === careerId);
-    
+
     if (!roadmap) {
       return NextResponse.json(
         { error: "Roadmap not found in dashboard" },
@@ -266,14 +273,46 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    if (progress !== undefined) {
-      roadmap.progress = progress;
+    // Update full structure if provided
+    if (modules) roadmap.modules = modules;
+    if (recognizedSkills) roadmap.recognizedSkills = recognizedSkills;
+    if (missingSkills) roadmap.missingSkills = missingSkills;
+    if (skillsAcquired !== undefined) {
+      // Merge skills, avoiding duplicates
+      const existing = roadmap.skillsAcquired || [];
+      roadmap.skillsAcquired = [...new Set([...existing, ...skillsAcquired])];
+    }
+
+    // Handle SubModule Completion Toggle
+    if (moduleId && subModuleId && isCompleted !== undefined) {
+      const module = roadmap.modules.find((m: any) => m.id === moduleId);
+      if (module) {
+        const subModule = module.subModules.find((s: any) => s.id === subModuleId);
+        if (subModule) {
+          subModule.completed = isCompleted;
+
+          // Recalculate Module Progress
+          const completedCount = module.subModules.filter((s: any) => s.completed).length;
+          module.progress = Math.round((completedCount / module.subModules.length) * 100);
+
+          // Update Module Status
+          if (module.progress === 100) module.status = 'completed';
+          else if (module.progress > 0) module.status = 'in-progress';
+          else module.status = 'pending';
+
+          // Recalculate Overall Roadmap Progress
+          const totalProgress = roadmap.modules.reduce((acc: number, m: any) => acc + m.progress, 0);
+          roadmap.progress = Math.round(totalProgress / roadmap.modules.length);
+        }
+      }
     }
 
     if (updateLastAccessed) {
       roadmap.lastAccessed = new Date();
     }
 
+    // Mark specific paths as modified to ensuer Mongoose saves them
+    dashboard.markModified('roadmaps');
     await dashboard.save();
 
     return NextResponse.json({

@@ -193,7 +193,7 @@ export default function RegisterPage() {
         throw new Error(data.message || 'Something went wrong');
       }
 
-      router.push('/login');
+      router.push('/onboarding');
     } catch (err: any) {
       setError(err.message);
     } finally {
