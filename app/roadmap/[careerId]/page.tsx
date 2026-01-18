@@ -54,7 +54,20 @@ export default function RoadmapPage() {
   const loadRoadmap = async () => {
     try {
       // Find career data
-      const career = (careersData as Career[]).find((c) => c.id === careerId);
+      // First check if we have dynamic data from analysis (Session Storage)
+      let career: Career | undefined;
+      const storedRecs = sessionStorage.getItem("careerRecommendations");
+      if (storedRecs) {
+        const data = JSON.parse(storedRecs);
+        const recommendations: CareerRecommendation[] = data.recommendations || [];
+        career = recommendations.find(r => r.career.id === careerId)?.career;
+      }
+
+      // Fallback to static data if not found in recommendations
+      if (!career) {
+        career = (careersData as Career[]).find((c) => c.id === careerId);
+      }
+
       if (!career) {
         router.push("/results");
         return;
@@ -154,6 +167,17 @@ export default function RoadmapPage() {
       }
 
       if (!parsedRoadmap) throw new Error("Could not load roadmap");
+
+      // Post-load check: ensure skill transparency is maintained
+      if ((!parsedRoadmap.recognizedSkills || parsedRoadmap.recognizedSkills.length === 0) && career.recognized_skills) {
+        parsedRoadmap.recognizedSkills = career.recognized_skills;
+      }
+      if ((!parsedRoadmap.missingSkills || parsedRoadmap.missingSkills.length === 0) && career.missing_skills) {
+        parsedRoadmap.missingSkills = career.missing_skills;
+      } else if (!parsedRoadmap.missingSkills || parsedRoadmap.missingSkills.length === 0) {
+        parsedRoadmap.missingSkills = career.skills_required;
+      }
+
       const progress = loadProgress(careerId);
       if (progress) {
         setCompletedSubModules(new Set(progress.completedSubModules));
